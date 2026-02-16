@@ -1,0 +1,70 @@
+{
+  "name": "Konsument - Standard",
+  "channel": "konsument",
+  "settings": {
+    "preheader": "",
+    "subject": "",
+    "sender_name": "Bygghandeln",
+    "footer_text": "Bygghandeln AB | Storgatan 5 | 123 45 Byggstad | Öppet mån-fre 8-18, lör 9-15",
+    "color_primary": "#E87A2E",
+    "color_secondary": "#4CAF50",
+    "color_background": "#FFFFFF",
+    "font_family": "Arial, Helvetica, sans-serif"
+  },
+  "blocks": [
+    {
+      "type": "hero",
+      "content": {
+        "imageUrl": "",
+        "imageAlt": "Veckans erbjudanden",
+        "title": "Veckans inspiration",
+        "subtitle": "Tips, erbjudanden och nyheter för ditt hem",
+        "ctaText": "Handla nu",
+        "ctaUrl": "#",
+        "ctaColor": "#E87A2E",
+        "overlayOpacity": 0.3,
+        "textAlign": "center"
+      },
+      "style": {
+        "paddingTop": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "paddingRight": 0
+      }
+    },
+    {
+      "type": "text",
+      "content": {
+        "heading": "Hej!",
+        "body": "<p>Välkommen till veckans nyhetsbrev! Här samlar vi de bästa erbjudandena och tips för dig som gillar att bygga och renovera.</p>",
+        "textAlign": "left"
+      },
+      "style": {
+        "paddingTop": 24,
+        "paddingBottom": 24,
+        "paddingLeft": 24,
+        "paddingRight": 24
+      }
+    },
+    {
+      "type": "footer",
+      "content": {
+        "companyName": "Bygghandeln AB",
+        "address": "Storgatan 5, 123 45 Byggstad",
+        "phone": "012-345 67 89",
+        "email": "info@bygghandeln.se",
+        "websiteUrl": "https://www.bygghandeln.se",
+        "socialLinks": [],
+        "unsubscribeText": "Avregistrera dig från nyhetsbrevet",
+        "unsubscribeUrl": "#"
+      },
+      "style": {
+        "backgroundColor": "#E87A2E",
+        "paddingTop": 24,
+        "paddingBottom": 24,
+        "paddingLeft": 24,
+        "paddingRight": 24
+      }
+    }
+  ]
+}

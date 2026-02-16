@@ -1,0 +1,70 @@
+{
+  "name": "Proffs - Standard",
+  "channel": "proffs",
+  "settings": {
+    "preheader": "",
+    "subject": "",
+    "sender_name": "Bygghandeln Proffs",
+    "footer_text": "Bygghandeln AB | Industrivägen 10 | 123 45 Byggstad",
+    "color_primary": "#1B4D3E",
+    "color_secondary": "#2E7D5B",
+    "color_background": "#F5F5F5",
+    "font_family": "Arial, Helvetica, sans-serif"
+  },
+  "blocks": [
+    {
+      "type": "hero",
+      "content": {
+        "imageUrl": "",
+        "imageAlt": "Proffs-erbjudanden",
+        "title": "Nyheter för proffs",
+        "subtitle": "De senaste produkterna och priserna",
+        "ctaText": "Se alla erbjudanden",
+        "ctaUrl": "#",
+        "ctaColor": "#2E7D5B",
+        "overlayOpacity": 0.4,
+        "textAlign": "center"
+      },
+      "style": {
+        "paddingTop": 0,
+        "paddingBottom": 0,
+        "paddingLeft": 0,
+        "paddingRight": 0
+      }
+    },
+    {
+      "type": "text",
+      "content": {
+        "heading": "Välkommen",
+        "body": "<p>Här hittar du veckans nyheter och erbjudanden för dig som proffs.</p>",
+        "textAlign": "left"
+      },
+      "style": {
+        "paddingTop": 24,
+        "paddingBottom": 24,
+        "paddingLeft": 24,
+        "paddingRight": 24
+      }
+    },
+    {
+      "type": "footer",
+      "content": {
+        "companyName": "Bygghandeln AB",
+        "address": "Industrivägen 10, 123 45 Byggstad",
+        "phone": "012-345 67 89",
+        "email": "proffs@bygghandeln.se",
+        "websiteUrl": "https://www.bygghandeln.se",
+        "socialLinks": [],
+        "unsubscribeText": "Avregistrera dig från nyhetsbrevet",
+        "unsubscribeUrl": "#"
+      },
+      "style": {
+        "backgroundColor": "#1B4D3E",
+        "paddingTop": 24,
+        "paddingBottom": 24,
+        "paddingLeft": 24,
+        "paddingRight": 24
+      }
+    }
+  ]
+}

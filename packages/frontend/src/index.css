@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+/* Input fields for property panel */
+.input-field {
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: #374151;
+  background-color: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  transition: border-color 0.15s;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.input-field::placeholder {
+  color: #9ca3af;
+}
+
+textarea.input-field {
+  resize: vertical;
+}
+
+/* Inline editable text in canvas */
+.inline-editable {
+  outline: none;
+  cursor: text;
+  border-radius: 2px;
+  transition: box-shadow 0.15s;
+}
+
+.inline-editable:hover {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.15);
+}
+
+.inline-editable:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+}
+
+.inline-editable:empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+/* Rich text editor placeholder */
+.rich-text-editor:empty::before {
+  content: attr(data-placeholder);
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+/* Rich text editor link styling */
+.rich-text-editor a {
+  color: #2563eb;
+  text-decoration: underline;
+}

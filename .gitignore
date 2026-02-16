@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.env
+*.db
+packages/backend/uploads/*
+!packages/backend/uploads/.gitkeep
+packages/backend/data/*
+!packages/backend/data/.gitkeep
+.vite/
