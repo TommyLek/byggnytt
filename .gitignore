@@ -7,3 +7,4 @@ packages/backend/uploads/*
 packages/backend/data/*
 !packages/backend/data/.gitkeep
 .vite/
+data/

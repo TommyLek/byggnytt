@@ -12,7 +12,7 @@ import { getDb } from './db/database.js';
 import { seedDefaultTemplates } from './db/seed.js';
 
 const app = express();
-const port = parseInt(process.env.PORT || '3001', 10);
+const port = parseInt(process.env.PORT || '3002', 10);
 
 // Middleware
 app.use(

@@ -165,16 +165,19 @@ function CreateFromTemplate({
   const [title, setTitle] = useState('');
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChannelSelect = async (ch: 'proffs' | 'konsument') => {
     setChannel(ch);
     setLoadingTemplates(true);
+    setError(null);
     try {
       const data = await api.templates.list(ch);
       setTemplates(data);
       setStep('template');
     } catch (err) {
       console.error('Kunde inte hamta mallar:', err);
+      setError('Kunde inte hämta mallar. Kontrollera att servern är igång.');
     } finally {
       setLoadingTemplates(false);
     }
@@ -188,6 +191,7 @@ function CreateFromTemplate({
   const handleCreate = async () => {
     if (!title.trim() || !channel) return;
     setCreating(true);
+    setError(null);
     try {
       const created = await api.newsletters.create({
         title: title.trim(),
@@ -197,6 +201,7 @@ function CreateFromTemplate({
       onCreated(created);
     } catch (err) {
       console.error('Kunde inte skapa nyhetsbrev:', err);
+      setError('Kunde inte skapa nyhetsbrevet. Försök igen.');
     } finally {
       setCreating(false);
     }
@@ -369,6 +374,13 @@ function CreateFromTemplate({
               {creating ? 'Skapar...' : 'Skapa'}
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Felmeddelande */}
+      {error && (
+        <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700">
+          {error}
         </div>
       )}
 
