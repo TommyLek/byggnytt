@@ -488,10 +488,10 @@ function ProductGridPreview({
               <img
                 src={product.imageUrl}
                 alt={product.name}
-                className="w-full h-20 object-cover rounded mb-1"
+                className="w-full h-24 object-contain rounded mb-1"
               />
             ) : (
-              <div className="w-full h-20 bg-gray-100 rounded mb-1 flex items-center justify-center text-gray-400 text-xs">
+              <div className="w-full h-24 bg-gray-100 rounded mb-1 flex items-center justify-center text-gray-400 text-xs">
                 Bild
               </div>
             )}

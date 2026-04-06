@@ -7,12 +7,13 @@ import templateRoutes from './routes/templates.js';
 import renderRoutes from './routes/render.js';
 import exportRoutes from './routes/export.js';
 import uploadRoutes from './routes/upload.js';
+import productLookupRoutes from './routes/product-lookup.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { getDb } from './db/database.js';
 import { seedDefaultTemplates } from './db/seed.js';
 
 const app = express();
-const port = parseInt(process.env.PORT || '3002', 10);
+const port = parseInt(process.env.PORT || '3001', 10);
 
 // Middleware
 app.use(
@@ -33,6 +34,7 @@ app.use('/api/render', renderRoutes);
 app.use('/api/export', exportRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/images', uploadRoutes);
+app.use('/api/product-lookup', productLookupRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

@@ -4,6 +4,7 @@ import type {
   UpdateNewsletterRequest,
   ImageInfo,
   Template,
+  ProductContent,
 } from '@byggnytt/shared';
 
 const API_BASE = '/api';
@@ -93,5 +94,12 @@ export const api = {
       request<Template>('/templates', { method: 'POST', body: JSON.stringify(data) }),
     delete: (id: string) =>
       request<void>(`/templates/${id}`, { method: 'DELETE' }),
+  },
+
+  productLookup: {
+    bySku: (sku: string, channel?: string) => {
+      const query = channel ? `?channel=${channel}` : '';
+      return request<ProductContent>(`/product-lookup/${encodeURIComponent(sku)}${query}`);
+    },
   },
 };

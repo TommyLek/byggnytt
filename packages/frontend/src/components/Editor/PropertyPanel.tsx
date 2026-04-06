@@ -14,6 +14,7 @@ import type {
 } from '@byggnytt/shared';
 import { ImageUploader } from './ImageUploader';
 import { RichTextEditor } from './RichTextEditor';
+import { ProductLookup } from './ProductLookup';
 
 export function PropertyPanel() {
   const { newsletter, selectedBlockId, updateBlockContent, updateBlockStyle, updateSettings } =
@@ -615,6 +616,13 @@ function ProductForm({
 }) {
   return (
     <div className="space-y-3">
+      <Field label="Hamta fran webshop">
+        <ProductLookup
+          currentSku={content.sku}
+          onResult={(p) => update({ ...p })}
+        />
+      </Field>
+      <div className="border-t border-gray-200 pt-3" />
       <Field label="Produktbild">
         <ImageUploader
           value={content.imageUrl}
@@ -699,6 +707,10 @@ function ProductGridForm({
     update({ products: [...content.products, newProduct] });
   };
 
+  const addFromWebshop = (product: ProductContent) => {
+    update({ products: [...content.products, product] });
+  };
+
   const removeProduct = (index: number) => {
     update({ products: content.products.filter((_, i) => i !== index) });
   };
@@ -732,8 +744,13 @@ function ProductGridForm({
             onClick={addProduct}
             className="text-xs text-blue-600 hover:text-blue-800 font-medium"
           >
-            + Lagg till
+            + Lagg till tom
           </button>
+        </div>
+        <div className="mb-3">
+          <Field label="Lagg till fran webshop">
+            <ProductLookup onResult={addFromWebshop} />
+          </Field>
         </div>
         <div className="space-y-2">
           {content.products.map((product, i) => (
@@ -785,6 +802,13 @@ function ProductFieldset({
       </div>
       {open && (
         <div className="p-2 space-y-2">
+          <Field label="Hamta fran webshop">
+            <ProductLookup
+              currentSku={product.sku}
+              onResult={(p) => onChange(index, { ...p })}
+            />
+          </Field>
+          <div className="border-t border-gray-200 pt-2" />
           <Field label="Bild">
             <ImageUploader
               value={product.imageUrl}
