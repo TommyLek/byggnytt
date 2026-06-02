@@ -9,21 +9,28 @@ import type {
   FooterContent,
   ProductContent,
   ProductGridContent,
+  JabsTheme,
 } from '@byggnytt/shared';
+import { themeVariant, jabsTheme } from '@byggnytt/shared';
 
 /**
  * Renderar block till ren HTML/CSS för webbvisning och PDF.
  * Skiljer sig från MJML-renderaren genom att använda modern CSS
  * istället för tabellbaserad layout.
+ *
+ * Proffskanalen ('proffs') renderas med jabs.se-uttrycket; övriga kanaler
+ * behåller den klassiska layouten.
  */
 export function renderWebHtml(
   blocks: Block[],
   settings: NewsletterSettings,
-  options: { title?: string; standalone?: boolean } = {}
+  options: { title?: string; standalone?: boolean; channel?: string } = {}
 ): string {
+  const jt = themeVariant(options.channel) === 'jabs' ? jabsTheme(settings) : null;
+
   const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
   const bodyContent = sortedBlocks
-    .map((block) => blockToHtml(block, settings))
+    .map((block) => (jt ? blockToJabsHtml(block, jt) : blockToHtml(block, settings)))
     .join('\n');
 
   if (!options.standalone) {
@@ -37,7 +44,7 @@ export function renderWebHtml(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(options.title || settings.subject || 'Nyhetsbrev')}</title>
   <style>
-    ${getBaseStyles(settings)}
+    ${jt ? getJabsStyles(settings, jt) : getBaseStyles(settings)}
   </style>
 </head>
 <body>
@@ -138,6 +145,10 @@ function getBaseStyles(settings: NewsletterSettings): string {
     .product-block .description { font-size: 14px; color: #666; margin-bottom: 8px; }
     .product-block .sku { font-size: 12px; color: #999; margin-bottom: 4px; }
     .product-block .price { font-size: 20px; font-weight: 700; margin-bottom: 12px; }
+    .product-block .cta-btn {
+      display: inline-block; padding: 10px 24px; color: #fff;
+      text-decoration: none; border-radius: 4px; font-size: 14px; font-weight: 600;
+    }
 
     /* Product Grid */
     .product-grid-block { padding: 24px; }
@@ -145,12 +156,15 @@ function getBaseStyles(settings: NewsletterSettings): string {
     .product-grid { display: grid; gap: 16px; }
     .product-grid.cols-2 { grid-template-columns: 1fr 1fr; }
     .product-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-    .product-card img { width: 100%; border-radius: 4px; margin-bottom: 8px; }
+    .product-card { display: flex; flex-direction: column; }
+    .product-card img { width: 100%; height: 150px; object-fit: contain; border-radius: 4px; margin-bottom: 8px; }
+    .product-card .name-wrap { flex: 1; }
     .product-card .name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
     .product-card .price { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
     .product-card .cta-btn {
       display: inline-block; padding: 8px 16px; color: #fff;
       text-decoration: none; border-radius: 4px; font-size: 12px;
+      margin-top: auto;
     }
 
     @media (max-width: 480px) {
@@ -299,7 +313,7 @@ function productGridToHtml(content: ProductGridContent, settings: NewsletterSett
       <div class="product-card">
         <img src="${escapeHtml(p.imageUrl)}" alt="${escapeHtml(p.name)}" />
         ${p.badge ? `<p class="badge" style="color:${settings.color_primary};font-size:11px;font-weight:700">${escapeHtml(p.badge)}</p>` : ''}
-        <p class="name">${escapeHtml(p.name)}</p>
+        <div class="name-wrap"><p class="name">${escapeHtml(p.name)}</p></div>
         <p class="price" style="color:${settings.color_primary}">${escapeHtml(p.price)}</p>
         <a class="cta-btn" href="${escapeHtml(p.productUrl)}" style="background-color:${settings.color_primary}">Visa</a>
       </div>`
@@ -310,6 +324,297 @@ function productGridToHtml(content: ProductGridContent, settings: NewsletterSett
     <div class="block-section product-grid-block">
       ${content.heading ? `<h2>${escapeHtml(content.heading)}</h2>` : ''}
       <div class="product-grid cols-${content.columns}">
+        ${cards}
+      </div>
+    </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// jabs.se-uttrycket (proffskanalen)
+// ════════════════════════════════════════════════════════════════════════
+
+function getJabsStyles(settings: NewsletterSettings, t: JabsTheme): string {
+  return `
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: ${settings.font_family};
+      background-color: ${t.pageBg};
+      color: ${t.body};
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    .newsletter-wrapper { display: flex; justify-content: center; padding: 24px 16px; }
+    .newsletter-container {
+      width: 100%; max-width: 600px;
+      background-color: ${t.surface};
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .block-section { width: 100%; }
+    img { max-width: 100%; height: auto; display: block; }
+    a { color: ${t.link}; }
+
+    /* Hero */
+    .j-hero { background-color: ${t.surface}; }
+    .j-hero .j-hero-image { width: 100%; }
+    .j-hero .j-hero-content { padding: 30px 36px 34px 36px; }
+    .j-hero h1 { font-size: 34px; line-height: 40px; font-weight: 700; color: ${t.ink}; margin-bottom: 12px; }
+    .j-hero .j-subtitle { font-size: 15px; line-height: 24px; color: ${t.body}; margin-bottom: 22px; }
+    .j-btn {
+      display: inline-block; padding: 14px 30px; color: ${t.accentInk};
+      text-decoration: none; border-radius: 3px; font-size: 14px; font-weight: 700; letter-spacing: 0.4px;
+    }
+
+    /* Text */
+    .j-text { background-color: ${t.surface}; padding: 30px 36px; }
+    .j-text .j-heading { border-left: 4px solid ${t.link}; padding-left: 12px; font-size: 20px; font-weight: 700; line-height: 1.3; color: ${t.ink}; margin-bottom: 14px; }
+    .j-text .j-body { font-size: 14px; line-height: 23px; color: ${t.body}; }
+    .j-text .j-body p { margin-bottom: 12px; }
+    .j-text .j-body a { color: ${t.link}; }
+
+    /* Image + Text */
+    .j-imgtext { background-color: ${t.surface}; display: flex; gap: 24px; padding: 28px 30px; align-items: center; }
+    .j-imgtext.reverse { flex-direction: row-reverse; }
+    .j-imgtext .j-col-img { flex: 1; min-width: 0; }
+    .j-imgtext .j-col-img img { width: 100%; }
+    .j-imgtext .j-col-text { flex: 1; }
+    .j-imgtext h3 { font-size: 18px; font-weight: 700; color: ${t.ink}; margin-bottom: 8px; }
+    .j-imgtext .j-body { font-size: 14px; line-height: 23px; color: ${t.body}; margin-bottom: 14px; }
+    .j-link { color: ${t.link}; font-size: 14px; font-weight: 700; text-decoration: none; }
+
+    /* Campaign / featured (mörk) */
+    .j-featured { padding: 8px 24px 26px 24px; background-color: ${t.sectionBg}; }
+    .j-featured-inner { display: flex; background-color: ${t.featuredBg}; }
+    .j-featured-inner .j-col-img { flex: 0 0 45%; background-color: ${t.featuredImageBg}; display: flex; align-items: center; justify-content: center; }
+    .j-featured-inner .j-col-img img { width: 100%; }
+    .j-featured-inner .j-col-text { flex: 1; padding: 26px 28px; }
+    .j-featured h2 { font-size: 23px; line-height: 28px; font-weight: 700; color: ${t.featuredInk}; margin-bottom: 10px; }
+    .j-featured .j-body { font-size: 14px; line-height: 22px; color: ${t.featuredBody}; margin-bottom: 16px; }
+    .j-featured.center { padding: 0; }
+    .j-featured.center .j-featured-banner { background-color: ${t.featuredBg}; padding: 34px 28px; text-align: center; }
+
+    /* Divider */
+    .j-divider.line hr { border: none; border-top-style: solid; }
+    .j-divider.dots { text-align: center; font-size: 20px; letter-spacing: 8px; padding: 8px 0; background-color: ${t.surface}; }
+
+    /* Footer */
+    .j-footer { background-color: ${t.footerBg}; padding: 30px 36px 28px 36px; text-align: center; }
+    .j-footer .j-company { font-size: 15px; font-weight: 700; color: ${t.footerInk}; margin-bottom: 8px; }
+    .j-footer .j-address { font-size: 12px; color: ${t.footerMuted}; margin-bottom: 4px; }
+    .j-footer .j-contact { font-size: 12px; color: ${t.footerMuted}; margin-top: 4px; }
+    .j-footer .j-contact a { color: ${t.footerMuted}; }
+    .j-footer .j-social { font-size: 13px; font-weight: 700; margin: 8px 0 0 0; }
+    .j-footer .j-social a { color: ${t.footerInk}; text-decoration: none; margin: 0 6px; }
+    .j-footer .j-unsub { font-size: 11px; color: ${t.footerMuted}; margin-top: 16px; }
+    .j-footer .j-unsub a { color: ${t.footerMuted}; text-decoration: underline; }
+
+    /* Badges */
+    .j-badge { display: inline-block; background-color: ${t.accent}; color: ${t.accentInk}; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 3px 8px; }
+    .j-badge.secondary { background-color: ${t.badgeSecondary}; text-transform: none; }
+    .j-pricelabel { font-size: 11px; color: ${t.muted}; }
+
+    /* Product (enskild) */
+    .j-product { background-color: ${t.sectionBg}; padding: 14px 24px; }
+    .j-product-card { display: flex; gap: 0; background-color: ${t.surface}; border: 1px solid ${t.cardBorder}; }
+    .j-product-card .j-col-img { flex: 0 0 40%; display: flex; align-items: center; justify-content: center; padding: 14px; }
+    .j-product-card .j-col-img img { width: 100%; }
+    .j-product-card .j-col-info { flex: 1; padding: 16px 18px; }
+    .j-product-card h3 { font-size: 16px; font-weight: 700; color: ${t.ink}; line-height: 20px; margin: 8px 0 4px; }
+    .j-product-card .j-desc { font-size: 12px; color: ${t.muted}; margin-bottom: 8px; }
+    .j-product-card .j-sku { font-size: 11px; color: ${t.muted}; margin-bottom: 6px; }
+    .j-product-card .j-price { font-size: 20px; font-weight: 700; color: ${t.accent}; margin: 0 0 12px; }
+
+    /* Product grid */
+    .j-gridhead { background-color: ${t.sectionBg}; padding: 26px 36px 8px 36px; }
+    .j-gridhead .j-heading { border-left: 5px solid ${t.accent}; padding-left: 12px; font-size: 20px; font-weight: 700; color: ${t.ink}; }
+    .j-grid-block { background-color: ${t.sectionBg}; padding: 14px 18px 22px; }
+    .j-grid { display: grid; gap: 12px; }
+    .j-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+    .j-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+    .j-grid-card { display: flex; flex-direction: column; background-color: ${t.surface}; border: 1px solid ${t.cardBorder}; padding: 12px 14px; }
+    .j-grid-card img { width: 100%; height: 120px; object-fit: contain; margin-bottom: 8px; }
+    .j-grid-card .j-name { font-size: 14px; font-weight: 700; color: ${t.ink}; line-height: 19px; margin-bottom: 4px; flex: 1; }
+    .j-grid-card .j-price { font-size: 18px; font-weight: 700; color: ${t.accent}; margin-bottom: 8px; }
+
+    @media (max-width: 480px) {
+      .j-imgtext { flex-direction: column !important; }
+      .j-featured-inner { flex-direction: column; }
+      .j-featured-inner .j-col-img { flex: none; }
+      .j-product-card { flex-direction: column; }
+      .j-product-card .j-col-img { flex: none; }
+      .j-grid.cols-3 { grid-template-columns: 1fr 1fr; }
+    }
+  `;
+}
+
+function blockToJabsHtml(block: Block, t: JabsTheme): string {
+  switch (block.type) {
+    case 'hero':
+      return heroJabsHtml(block.content as HeroContent, t);
+    case 'text':
+      return textJabsHtml(block.content as TextContent);
+    case 'image-text':
+      return imageTextJabsHtml(block.content as ImageTextContent);
+    case 'campaign':
+      return campaignJabsHtml(block.content as CampaignContent, t);
+    case 'divider':
+      return dividerJabsHtml(block.content as DividerContent, t);
+    case 'footer':
+      return footerJabsHtml(block.content as FooterContent);
+    case 'product':
+      return productJabsHtml(block.content as ProductContent);
+    case 'product-grid':
+      return productGridJabsHtml(block.content as ProductGridContent);
+    default:
+      return '';
+  }
+}
+
+function heroJabsHtml(content: HeroContent, t: JabsTheme): string {
+  const img = content.imageUrl
+    ? `<img class="j-hero-image" src="${escapeHtml(content.imageUrl)}" alt="${escapeHtml(content.imageAlt)}" />`
+    : '';
+  const cta = content.ctaText && content.ctaUrl
+    ? `<a class="j-btn" href="${escapeHtml(content.ctaUrl)}" style="background-color:${content.ctaColor || t.accent}">${escapeHtml(content.ctaText)}</a>`
+    : '';
+
+  return `
+    <div class="block-section j-hero" style="text-align:${content.textAlign}">
+      ${img}
+      <div class="j-hero-content">
+        <h1>${escapeHtml(content.title)}</h1>
+        ${content.subtitle ? `<p class="j-subtitle">${escapeHtml(content.subtitle)}</p>` : ''}
+        ${cta}
+      </div>
+    </div>`;
+}
+
+function textJabsHtml(content: TextContent): string {
+  return `
+    <div class="block-section j-text" style="text-align:${content.textAlign}">
+      ${content.heading ? `<div class="j-heading">${escapeHtml(content.heading)}</div>` : ''}
+      <div class="j-body">${content.body}</div>
+    </div>`;
+}
+
+function imageTextJabsHtml(content: ImageTextContent): string {
+  const cta = content.ctaText && content.ctaUrl
+    ? `<a class="j-link" href="${escapeHtml(content.ctaUrl)}">${escapeHtml(content.ctaText)} &rarr;</a>`
+    : '';
+
+  return `
+    <div class="block-section j-imgtext${content.imagePosition === 'right' ? ' reverse' : ''}">
+      <div class="j-col-img">
+        <img src="${escapeHtml(content.imageUrl)}" alt="${escapeHtml(content.imageAlt)}" />
+      </div>
+      <div class="j-col-text">
+        ${content.heading ? `<h3>${escapeHtml(content.heading)}</h3>` : ''}
+        <div class="j-body">${content.body}</div>
+        ${cta}
+      </div>
+    </div>`;
+}
+
+function campaignJabsHtml(content: CampaignContent, t: JabsTheme): string {
+  const cta = content.ctaText && content.ctaUrl
+    ? `<a class="j-btn" href="${escapeHtml(content.ctaUrl)}" style="background-color:${content.ctaColor || t.accent}">${escapeHtml(content.ctaText)}</a>`
+    : '';
+
+  if (content.backgroundImageUrl) {
+    return `
+      <div class="block-section j-featured">
+        <div class="j-featured-inner">
+          <div class="j-col-img">
+            <img src="${escapeHtml(content.backgroundImageUrl)}" alt="${escapeHtml(content.heading)}" />
+          </div>
+          <div class="j-col-text">
+            <h2>${escapeHtml(content.heading)}</h2>
+            ${content.body ? `<p class="j-body">${escapeHtml(content.body)}</p>` : ''}
+            ${cta}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  return `
+    <div class="block-section j-featured center">
+      <div class="j-featured-banner">
+        <h2>${escapeHtml(content.heading)}</h2>
+        ${content.body ? `<p class="j-body">${escapeHtml(content.body)}</p>` : ''}
+        ${cta}
+      </div>
+    </div>`;
+}
+
+function dividerJabsHtml(content: DividerContent, t: JabsTheme): string {
+  if (content.style === 'space') {
+    return `<div class="block-section" style="height:${content.height}px;background-color:${t.surface}"></div>`;
+  }
+  if (content.style === 'dots') {
+    return `<div class="block-section j-divider dots" style="color:${content.lineColor || t.dividerLine}">&bull;&bull;&bull;</div>`;
+  }
+  return `<div class="block-section j-divider line" style="padding:8px 24px;background-color:${t.surface}"><hr style="border-top-color:${content.lineColor || t.dividerLine};border-top-width:${content.height}px" /></div>`;
+}
+
+function footerJabsHtml(content: FooterContent): string {
+  const contactParts: string[] = [];
+  if (content.phone) contactParts.push(escapeHtml(content.phone));
+  if (content.email) contactParts.push(`<a href="mailto:${escapeHtml(content.email)}">${escapeHtml(content.email)}</a>`);
+  if (content.websiteUrl) contactParts.push(`<a href="${escapeHtml(content.websiteUrl)}">${escapeHtml(content.websiteUrl)}</a>`);
+
+  const social = content.socialLinks && content.socialLinks.length > 0
+    ? `<p class="j-social">${content.socialLinks.map((l) => `<a href="${escapeHtml(l.url)}">${escapeHtml(l.platform)}</a>`).join(' · ')}</p>`
+    : '';
+
+  return `
+    <div class="block-section j-footer">
+      <p class="j-company">${escapeHtml(content.companyName)}</p>
+      <p class="j-address">${escapeHtml(content.address)}</p>
+      ${contactParts.length > 0 ? `<p class="j-contact">${contactParts.join(' | ')}</p>` : ''}
+      ${social}
+      <p class="j-unsub"><a href="${escapeHtml(content.unsubscribeUrl)}">${escapeHtml(content.unsubscribeText)}</a></p>
+    </div>`;
+}
+
+function productJabsHtml(content: ProductContent): string {
+  return `
+    <div class="block-section j-product">
+      <div class="j-product-card">
+        <div class="j-col-img">
+          <img src="${escapeHtml(content.imageUrl)}" alt="${escapeHtml(content.name)}" />
+        </div>
+        <div class="j-col-info">
+          ${content.badge ? `<span class="j-badge">${escapeHtml(content.badge)}</span>` : ''}
+          <h3>${escapeHtml(content.name)}</h3>
+          ${content.description ? `<p class="j-desc">${escapeHtml(content.description)}</p>` : ''}
+          ${content.sku ? `<p class="j-sku">Art.nr: ${escapeHtml(content.sku)}</p>` : ''}
+          <p class="j-pricelabel">Pris från</p>
+          <p class="j-price">${escapeHtml(content.price)}</p>
+          <a class="j-link" href="${escapeHtml(content.productUrl)}">Visa produkt &rarr;</a>
+        </div>
+      </div>
+    </div>`;
+}
+
+function productGridJabsHtml(content: ProductGridContent): string {
+  const cards = content.products
+    .slice(0, content.columns)
+    .map(
+      (p) => `
+      <div class="j-grid-card">
+        ${p.badge ? `<span class="j-badge" style="margin-bottom:6px">${escapeHtml(p.badge)}</span>` : ''}
+        <img src="${escapeHtml(p.imageUrl)}" alt="${escapeHtml(p.name)}" />
+        <p class="j-name">${escapeHtml(p.name)}</p>
+        <p class="j-pricelabel">Pris från</p>
+        <p class="j-price">${escapeHtml(p.price)}</p>
+        <a class="j-link" href="${escapeHtml(p.productUrl)}">Visa &rarr;</a>
+      </div>`
+    )
+    .join('\n');
+
+  return `
+    ${content.heading ? `<div class="block-section j-gridhead"><div class="j-heading">${escapeHtml(content.heading)}</div></div>` : ''}
+    <div class="block-section j-grid-block">
+      <div class="j-grid cols-${content.columns}">
         ${cards}
       </div>
     </div>`;

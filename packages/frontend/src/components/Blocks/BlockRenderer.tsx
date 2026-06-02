@@ -9,7 +9,9 @@ import type {
   FooterContent,
   ProductContent,
   ProductGridContent,
+  JabsTheme,
 } from '@byggnytt/shared';
+import { jabsTheme } from '@byggnytt/shared';
 import { useEditorStore } from '../../stores/editorStore';
 import { api } from '../../utils/api';
 
@@ -18,6 +20,33 @@ interface BlockRendererProps {
 }
 
 export function BlockRenderer({ block }: BlockRendererProps) {
+  const channel = useEditorStore((s) => s.newsletter?.channel);
+  const settings = useEditorStore((s) => s.newsletter?.settings);
+
+  if (channel === 'proffs' && settings) {
+    const t = jabsTheme(settings);
+    switch (block.type) {
+      case 'hero':
+        return <HeroJabsPreview block={block} content={block.content as HeroContent} t={t} />;
+      case 'text':
+        return <TextJabsPreview block={block} content={block.content as TextContent} t={t} />;
+      case 'image-text':
+        return <ImageTextJabsPreview block={block} content={block.content as ImageTextContent} t={t} />;
+      case 'campaign':
+        return <CampaignJabsPreview block={block} content={block.content as CampaignContent} t={t} />;
+      case 'divider':
+        return <DividerPreview content={block.content as DividerContent} />;
+      case 'footer':
+        return <FooterJabsPreview block={block} content={block.content as FooterContent} t={t} />;
+      case 'product':
+        return <ProductJabsPreview block={block} content={block.content as ProductContent} t={t} />;
+      case 'product-grid':
+        return <ProductGridJabsPreview block={block} content={block.content as ProductGridContent} t={t} />;
+      default:
+        break;
+    }
+  }
+
   switch (block.type) {
     case 'hero':
       return <HeroPreview block={block} content={block.content as HeroContent} />;
@@ -502,6 +531,268 @@ function ProductGridPreview({
                 {product.badge}
               </span>
             )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── jabs.se-uttrycket (proffskanalen) ──────────────────────────────────
+
+function HeroJabsPreview({ block, content, t }: { block: Block; content: HeroContent; t: JabsTheme }) {
+  return (
+    <div style={{ textAlign: content.textAlign, backgroundColor: t.surface }}>
+      <CanvasImage
+        url={content.imageUrl}
+        alt={content.imageAlt}
+        blockId={block.id}
+        field="imageUrl"
+        className="w-full h-48"
+        placeholderText="Hero-bild"
+      />
+      <div className="px-7 pt-7 pb-8">
+        <InlineText
+          value={content.title}
+          blockId={block.id}
+          field="title"
+          as="h2"
+          className="text-3xl font-bold leading-tight"
+          placeholder="Rubrik"
+        />
+        <InlineText
+          value={content.subtitle || ''}
+          blockId={block.id}
+          field="subtitle"
+          as="p"
+          className="text-sm mt-2 mb-1"
+          placeholder="Underrubrik"
+        />
+        {content.ctaText && (
+          <span
+            className="inline-block mt-4 px-6 py-3 text-xs font-bold tracking-wide"
+            style={{ backgroundColor: content.ctaColor || t.accent, color: t.accentInk, borderRadius: 3 }}
+          >
+            {content.ctaText}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function TextJabsPreview({ block, content, t }: { block: Block; content: TextContent; t: JabsTheme }) {
+  return (
+    <div className="px-7 py-7" style={{ backgroundColor: t.surface, textAlign: content.textAlign }}>
+      {content.heading !== undefined && (
+        <div style={{ borderLeft: `4px solid ${t.link}`, paddingLeft: 12, marginBottom: 14 }}>
+          <InlineText
+            value={content.heading || ''}
+            blockId={block.id}
+            field="heading"
+            as="div"
+            className="text-xl font-bold leading-tight"
+            placeholder="Rubrik"
+          />
+        </div>
+      )}
+      <div
+        className="text-sm leading-relaxed"
+        style={{ color: t.body }}
+        dangerouslySetInnerHTML={{ __html: content.body }}
+      />
+    </div>
+  );
+}
+
+function ImageTextJabsPreview({ block, content, t }: { block: Block; content: ImageTextContent; t: JabsTheme }) {
+  return (
+    <div
+      className={`flex gap-4 px-7 py-7 items-center ${content.imagePosition === 'right' ? 'flex-row-reverse' : ''}`}
+      style={{ backgroundColor: t.surface }}
+    >
+      <div className="w-1/2">
+        <CanvasImage
+          url={content.imageUrl}
+          alt={content.imageAlt}
+          blockId={block.id}
+          field="imageUrl"
+          className="w-full h-32"
+          placeholderText="Bild"
+        />
+      </div>
+      <div className="w-1/2">
+        <InlineText
+          value={content.heading || ''}
+          blockId={block.id}
+          field="heading"
+          as="h3"
+          className="text-base font-bold mb-1"
+          placeholder="Rubrik"
+        />
+        <div
+          className="text-xs leading-relaxed"
+          style={{ color: t.body }}
+          dangerouslySetInnerHTML={{ __html: content.body }}
+        />
+        {content.ctaText && (
+          <span className="inline-block mt-2 text-sm font-bold" style={{ color: t.link }}>
+            {content.ctaText} &rarr;
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CampaignJabsPreview({ block, content, t }: { block: Block; content: CampaignContent; t: JabsTheme }) {
+  const hasImage = !!content.backgroundImageUrl;
+  return (
+    <div style={{ backgroundColor: t.sectionBg }} className="px-6 pt-2 pb-6">
+      <div className={`flex ${hasImage ? '' : 'justify-center'}`} style={{ backgroundColor: t.featuredBg }}>
+        {hasImage && (
+          <div className="w-[45%]">
+            <CanvasImage
+              url={content.backgroundImageUrl || ''}
+              alt={content.heading}
+              blockId={block.id}
+              field="backgroundImageUrl"
+              className="w-full h-full min-h-[140px]"
+              placeholderText="Bild"
+            />
+          </div>
+        )}
+        <div className={`${hasImage ? 'flex-1' : 'w-full text-center'} px-7 py-6`}>
+          <InlineText
+            value={content.heading}
+            blockId={block.id}
+            field="heading"
+            as="h2"
+            className="text-lg font-bold mb-2"
+            placeholder="Kampanjrubrik"
+          />
+          <InlineText
+            value={content.body || ''}
+            blockId={block.id}
+            field="body"
+            as="p"
+            className="text-sm mb-3"
+            placeholder="Kampanjtext"
+          />
+          <span
+            className="inline-block px-5 py-2.5 text-xs font-bold"
+            style={{ backgroundColor: content.ctaColor || t.accent, color: t.accentInk, borderRadius: 3 }}
+          >
+            {content.ctaText}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FooterJabsPreview({ block, content, t }: { block: Block; content: FooterContent; t: JabsTheme }) {
+  return (
+    <div className="text-center p-7" style={{ backgroundColor: t.footerBg }}>
+      <InlineText
+        value={content.companyName}
+        blockId={block.id}
+        field="companyName"
+        as="p"
+        className="text-sm font-bold"
+        placeholder="Foretagsnamn"
+      />
+      <p className="text-xs mt-1" style={{ color: t.footerMuted }}>{content.address}</p>
+      {content.phone && <p className="text-xs" style={{ color: t.footerMuted }}>{content.phone}</p>}
+      {content.email && <p className="text-xs" style={{ color: t.footerMuted }}>{content.email}</p>}
+      {content.socialLinks && content.socialLinks.length > 0 && (
+        <p className="text-xs font-bold mt-2" style={{ color: t.footerInk }}>
+          {content.socialLinks.map((l) => l.platform).join(' · ')}
+        </p>
+      )}
+      <p className="text-xs mt-3 underline" style={{ color: t.footerMuted }}>{content.unsubscribeText}</p>
+    </div>
+  );
+}
+
+function ProductJabsPreview({ block, content, t }: { block: Block; content: ProductContent; t: JabsTheme }) {
+  return (
+    <div className="px-6 py-3.5" style={{ backgroundColor: t.sectionBg }}>
+      <div className="flex" style={{ backgroundColor: t.surface, border: `1px solid ${t.cardBorder}` }}>
+        <div className="w-2/5 p-3.5 flex items-center">
+          <CanvasImage
+            url={content.imageUrl}
+            alt={content.name}
+            blockId={block.id}
+            field="imageUrl"
+            className="w-full h-24"
+            placeholderText="Produkt"
+          />
+        </div>
+        <div className="flex-1 p-4 min-w-0">
+          {content.badge && (
+            <span
+              className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide mb-2"
+              style={{ backgroundColor: t.accent, color: t.accentInk }}
+            >
+              {content.badge}
+            </span>
+          )}
+          <InlineText
+            value={content.name}
+            blockId={block.id}
+            field="name"
+            as="h3"
+            className="text-base font-bold leading-snug"
+            placeholder="Produktnamn"
+          />
+          {content.description && (
+            <p className="text-xs mt-1 line-clamp-2" style={{ color: t.muted }}>{content.description}</p>
+          )}
+          <p className="text-[11px] mt-2" style={{ color: t.muted }}>Pris från</p>
+          <p className="text-xl font-bold" style={{ color: t.accent }}>{content.price}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProductGridJabsPreview({ block, content, t }: { block: Block; content: ProductGridContent; t: JabsTheme }) {
+  return (
+    <div style={{ backgroundColor: t.sectionBg }} className="px-5 pt-6 pb-5">
+      {content.heading !== undefined && (
+        <div style={{ borderLeft: `5px solid ${t.accent}`, paddingLeft: 12, marginBottom: 14 }}>
+          <InlineText
+            value={content.heading || ''}
+            blockId={block.id}
+            field="heading"
+            as="h3"
+            className="text-xl font-bold"
+            placeholder="Rubrik"
+          />
+        </div>
+      )}
+      <div className={`grid gap-3 ${content.columns === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        {content.products.map((product, i) => (
+          <div key={i} className="p-3" style={{ backgroundColor: t.surface, border: `1px solid ${t.cardBorder}` }}>
+            {product.badge && (
+              <span
+                className="inline-block px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide mb-1.5"
+                style={{ backgroundColor: t.accent, color: t.accentInk }}
+              >
+                {product.badge}
+              </span>
+            )}
+            {product.imageUrl ? (
+              <img src={product.imageUrl} alt={product.name} className="w-full h-24 object-contain mb-2" />
+            ) : (
+              <div className="w-full h-24 mb-2 flex items-center justify-center text-xs" style={{ backgroundColor: t.sectionBg, color: t.muted }}>
+                Bild
+              </div>
+            )}
+            <p className="text-xs font-bold truncate" style={{ color: t.ink }}>{product.name}</p>
+            <p className="text-[11px] mt-1" style={{ color: t.muted }}>Pris från</p>
+            <p className="text-base font-bold" style={{ color: t.accent }}>{product.price}</p>
           </div>
         ))}
       </div>

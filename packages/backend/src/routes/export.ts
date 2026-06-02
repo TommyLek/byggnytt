@@ -27,6 +27,7 @@ router.post('/pdf/:id', validateUuidParam(), async (req, res, next) => {
     const html = renderWebHtml(blocks, settings, {
       title: row.title,
       standalone: true,
+      channel: row.channel,
     });
 
     const pdfBuffer = await generatePdf(html);
@@ -61,6 +62,7 @@ router.get('/public/:id', validateUuidParam(), (req, res, next) => {
     const html = renderWebHtml(blocks, settings, {
       title: row.title,
       standalone: true,
+      channel: row.channel,
     });
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');

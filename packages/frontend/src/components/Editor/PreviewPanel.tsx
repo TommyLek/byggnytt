@@ -20,7 +20,7 @@ export function PreviewPanel({ onClose }: PreviewPanelProps) {
     setError(null);
     try {
       const renderFn = renderMode === 'web' ? api.render.preview : api.render.mjml;
-      const res = await renderFn(newsletter.blocks, newsletter.settings);
+      const res = await renderFn(newsletter.blocks, newsletter.settings, newsletter.channel);
       setHtml(res.html);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Rendering misslyckades');

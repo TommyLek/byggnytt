@@ -8,9 +8,10 @@ const router = Router();
 // POST /api/render - Webb-HTML för förhandsgranskning
 router.post('/', (req, res, next) => {
   try {
-    const { blocks, settings } = req.body as {
+    const { blocks, settings, channel } = req.body as {
       blocks: Block[];
       settings: NewsletterSettings;
+      channel?: string;
     };
 
     if (!blocks || !settings) {
@@ -23,7 +24,7 @@ router.post('/', (req, res, next) => {
       return;
     }
 
-    const html = renderWebHtml(blocks, settings, { standalone: true });
+    const html = renderWebHtml(blocks, settings, { standalone: true, channel });
 
     res.json({ html, type: 'preview' });
   } catch (err) {
@@ -34,9 +35,10 @@ router.post('/', (req, res, next) => {
 // POST /api/render/mjml - Mailkompatibel HTML via MJML
 router.post('/mjml', (req, res, next) => {
   try {
-    const { blocks, settings } = req.body as {
+    const { blocks, settings, channel } = req.body as {
       blocks: Block[];
       settings: NewsletterSettings;
+      channel?: string;
     };
 
     if (!blocks || !settings) {
@@ -49,7 +51,7 @@ router.post('/mjml', (req, res, next) => {
       return;
     }
 
-    const result = buildMjml(blocks, settings);
+    const result = buildMjml(blocks, settings, channel);
 
     if (result.errors.length > 0) {
       console.warn('MJML-varningar:', result.errors);

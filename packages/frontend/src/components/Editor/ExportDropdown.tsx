@@ -73,7 +73,7 @@ export function ExportDropdown({ onClose }: ExportDropdownProps) {
     if (!newsletter) return;
     try {
       setStatus({ type: 'info', message: 'Genererar mail-HTML...' });
-      const res = await api.render.mjml(newsletter.blocks, newsletter.settings);
+      const res = await api.render.mjml(newsletter.blocks, newsletter.settings, newsletter.channel);
       await navigator.clipboard.writeText(res.html);
       setStatus({ type: 'success', message: 'Mail-HTML kopierad till urklipp!' });
       setTimeout(onClose, 1500);

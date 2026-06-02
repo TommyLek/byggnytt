@@ -8,3 +8,4 @@ packages/backend/data/*
 !packages/backend/data/.gitkeep
 .vite/
 data/
+*.tsbuildinfo

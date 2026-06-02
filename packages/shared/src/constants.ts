@@ -9,9 +9,10 @@ export const CHANNEL_CONFIG = {
       subject: '',
       sender_name: 'Bygghandeln Proffs',
       footer_text: 'Bygghandeln AB | Industrivägen 10 | 123 45 Byggstad',
-      color_primary: '#1B4D3E',
-      color_secondary: '#2E7D5B',
-      color_background: '#F5F5F5',
+      // jabs.se-paletten: orange accent, blå länk, ljusgrå sidbakgrund
+      color_primary: '#EC6A1E',
+      color_secondary: '#1A6FB5',
+      color_background: '#E4E6E8',
       font_family: 'Arial, Helvetica, sans-serif',
     } satisfies NewsletterSettings,
   },

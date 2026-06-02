@@ -41,15 +41,15 @@ export const api = {
   },
 
   render: {
-    preview: (blocks: Newsletter['blocks'], settings: Newsletter['settings']) =>
+    preview: (blocks: Newsletter['blocks'], settings: Newsletter['settings'], channel?: string) =>
       request<{ html: string }>('/render', {
         method: 'POST',
-        body: JSON.stringify({ blocks, settings }),
+        body: JSON.stringify({ blocks, settings, channel }),
       }),
-    mjml: (blocks: Newsletter['blocks'], settings: Newsletter['settings']) =>
+    mjml: (blocks: Newsletter['blocks'], settings: Newsletter['settings'], channel?: string) =>
       request<{ html: string }>('/render/mjml', {
         method: 'POST',
-        body: JSON.stringify({ blocks, settings }),
+        body: JSON.stringify({ blocks, settings, channel }),
       }),
   },
 
