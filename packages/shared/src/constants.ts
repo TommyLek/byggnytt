@@ -9,6 +9,13 @@ export const CHANNEL_CONFIG = {
       subject: '',
       sender_name: 'Bygghandeln Proffs',
       footer_text: 'Bygghandeln AB | Industrivägen 10 | 123 45 Byggstad',
+      // Header-chrome (jabs): huvudlogga (laddas upp), etikett + butikslogotyper
+      header_logo_url: '',
+      header_label: 'Nyhetsbrev',
+      header_stores: [
+        { name: 'Järn AB Södertorg', logoUrl: '' },
+        { name: 'Snicken', logoUrl: '' },
+      ],
       // jabs.se-paletten: orange accent, blå länk, ljusgrå sidbakgrund
       color_primary: '#EC6A1E',
       color_secondary: '#1A6FB5',

@@ -11,6 +11,7 @@ import type {
   FooterContent,
   ProductContent,
   ProductGridContent,
+  HeaderStore,
 } from '@byggnytt/shared';
 import { ImageUploader } from './ImageUploader';
 import { RichTextEditor } from './RichTextEditor';
@@ -123,6 +124,60 @@ function SettingsForm() {
           className="input-field"
         />
       </Field>
+
+      {/* Header (endast proffskanalen) */}
+      {newsletter.channel === 'proffs' && (
+        <div className="border-t border-gray-200 pt-3 space-y-3">
+          <span className="text-xs font-medium text-gray-600">Header</span>
+          <Field label="Huvudlogga">
+            <ImageUploader
+              value={s.header_logo_url ?? ''}
+              onChange={(url) => updateSettings({ header_logo_url: url })}
+              height="h-16"
+            />
+          </Field>
+          <Field label="Etikett">
+            <input
+              type="text"
+              value={s.header_label ?? CHANNEL_CONFIG.proffs.defaultSettings.header_label ?? ''}
+              onChange={(e) => updateSettings({ header_label: e.target.value })}
+              className="input-field"
+              placeholder="Nyhetsbrev"
+            />
+          </Field>
+          <div>
+            <span className="text-xs text-gray-500">Butikslogotyper</span>
+            <div className="space-y-2 mt-1">
+              {(s.header_stores ?? CHANNEL_CONFIG.proffs.defaultSettings.header_stores ?? []).map(
+                (st, i, arr) => {
+                  const updateStore = (patch: Partial<HeaderStore>) =>
+                    updateSettings({
+                      header_stores: arr.map((x, idx) =>
+                        idx === i ? { ...x, ...patch } : { ...x },
+                      ),
+                    });
+                  return (
+                    <div key={i} className="border border-gray-200 rounded p-2 space-y-1.5">
+                      <input
+                        type="text"
+                        value={st.name}
+                        onChange={(e) => updateStore({ name: e.target.value })}
+                        className="input-field"
+                        placeholder="Butiksnamn"
+                      />
+                      <ImageUploader
+                        value={st.logoUrl}
+                        onChange={(url) => updateStore({ logoUrl: url })}
+                        height="h-14"
+                      />
+                    </div>
+                  );
+                },
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Fargschema */}
       <div className="border-t border-gray-200 pt-3">

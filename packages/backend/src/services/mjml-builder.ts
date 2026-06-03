@@ -36,9 +36,12 @@ export function buildMjml(
 
   const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
 
-  const mjmlBlocks = sortedBlocks
+  const blocksMjml = sortedBlocks
     .map((block) => blockToMjml(block, settings, variant, jt))
     .join('\n');
+
+  // Fast header-chrome överst i proffskanalen
+  const mjmlBlocks = jt ? headerJabsMjml(settings, jt) + '\n' + blocksMjml : blocksMjml;
 
   const head = jt
     ? `
@@ -162,6 +165,45 @@ function blockToJabsMjml(block: Block, settings: NewsletterSettings, jt: JabsThe
     default:
       return '';
   }
+}
+
+function headerJabsMjml(settings: NewsletterSettings, jt: JabsTheme): string {
+  const logo = settings.header_logo_url
+    ? `<mj-image src="${escapeHtml(settings.header_logo_url)}" alt="${escapeHtml(settings.sender_name)}" width="160px" align="left" padding="0" />`
+    : `<mj-text align="left" font-size="20px" font-weight="bold" color="${jt.ink}" padding="0">${escapeHtml(settings.sender_name)}</mj-text>`;
+
+  const label = (settings.header_label || 'Nyhetsbrev').toUpperCase();
+
+  const stores = settings.header_stores ?? [];
+  const storeCols = stores
+    .map((st) =>
+      st.logoUrl
+        ? `<mj-column vertical-align="middle"><mj-image src="${escapeHtml(st.logoUrl)}" alt="${escapeHtml(st.name)}" width="150px" padding="10px 10px 0 10px" /></mj-column>`
+        : `<mj-column vertical-align="middle"><mj-text align="center" font-size="14px" font-weight="bold" color="${jt.ink}" padding="14px 10px 0 10px">${escapeHtml(st.name)}</mj-text></mj-column>`
+    )
+    .join('');
+
+  return `
+    <mj-section background-color="${jt.surface}" padding="10px 24px">
+      <mj-column>
+        <mj-text align="center" font-size="11px" color="${jt.muted}" padding="0">
+          Visas inte brevet korrekt? <a href="#" style="color:${jt.muted}; text-decoration:underline;">Öppna i webbläsaren</a>
+        </mj-text>
+      </mj-column>
+    </mj-section>
+    <mj-section background-color="${jt.surface}" border-top="4px solid ${jt.accent}" padding="20px 28px 14px 28px">
+      <mj-column width="60%" vertical-align="middle">
+        ${logo}
+      </mj-column>
+      <mj-column width="40%" vertical-align="middle">
+        <mj-text align="right" font-size="11px" font-weight="bold" letter-spacing="2px" color="${jt.muted}" padding="0">${escapeHtml(label)}</mj-text>
+      </mj-column>
+    </mj-section>
+    ${stores.length > 0 ? `
+    <mj-section background-color="${jt.surface}" border-top="1px solid ${jt.dividerLine}" padding="10px 22px 12px 22px">
+      ${storeCols}
+    </mj-section>` : ''}
+  `;
 }
 
 function heroJabsMjml(content: HeroContent, jt: JabsTheme): string {

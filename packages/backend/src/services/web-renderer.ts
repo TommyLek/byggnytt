@@ -29,9 +29,12 @@ export function renderWebHtml(
   const jt = themeVariant(options.channel) === 'jabs' ? jabsTheme(settings) : null;
 
   const sortedBlocks = [...blocks].sort((a, b) => a.order - b.order);
-  const bodyContent = sortedBlocks
+  const blocksHtml = sortedBlocks
     .map((block) => (jt ? blockToJabsHtml(block, jt) : blockToHtml(block, settings)))
     .join('\n');
+
+  // Fast header-chrome överst i proffskanalen
+  const bodyContent = jt ? headerJabsHtml(settings, jt) + '\n' + blocksHtml : blocksHtml;
 
   if (!options.standalone) {
     return bodyContent;
@@ -353,6 +356,19 @@ function getJabsStyles(settings: NewsletterSettings, t: JabsTheme): string {
     img { max-width: 100%; height: auto; display: block; }
     a { color: ${t.link}; }
 
+    /* Header-chrome */
+    .j-header { background-color: ${t.surface}; }
+    .j-hd-utility { text-align: center; font-size: 11px; color: ${t.muted}; padding: 10px 24px; }
+    .j-hd-utility a { color: ${t.muted}; text-decoration: underline; }
+    .j-hd-main { display: flex; align-items: center; justify-content: space-between; border-top: 4px solid ${t.accent}; padding: 20px 28px 14px 28px; }
+    .j-hd-logo { width: 160px; max-width: 160px; height: auto; }
+    .j-hd-logotext { font-size: 20px; font-weight: 700; color: ${t.ink}; }
+    .j-hd-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: ${t.muted}; text-transform: uppercase; }
+    .j-hd-stores { display: flex; border-top: 1px solid ${t.dividerLine}; padding: 12px 22px; gap: 10px; }
+    .j-hd-store { flex: 1; display: flex; align-items: center; justify-content: center; }
+    .j-hd-store img { max-height: 50px; width: auto; display: inline-block; }
+    .j-hd-store span { font-size: 14px; font-weight: 700; color: ${t.ink}; }
+
     /* Hero */
     .j-hero { background-color: ${t.surface}; }
     .j-hero .j-hero-image { width: 100%; }
@@ -467,6 +483,33 @@ function blockToJabsHtml(block: Block, t: JabsTheme): string {
     default:
       return '';
   }
+}
+
+function headerJabsHtml(settings: NewsletterSettings, _t: JabsTheme): string {
+  const logo = settings.header_logo_url
+    ? `<img class="j-hd-logo" src="${escapeHtml(settings.header_logo_url)}" alt="${escapeHtml(settings.sender_name)}" />`
+    : `<span class="j-hd-logotext">${escapeHtml(settings.sender_name)}</span>`;
+
+  const label = (settings.header_label || 'Nyhetsbrev').toUpperCase();
+
+  const stores = settings.header_stores ?? [];
+  const storeEls = stores
+    .map((st) =>
+      st.logoUrl
+        ? `<div class="j-hd-store"><img src="${escapeHtml(st.logoUrl)}" alt="${escapeHtml(st.name)}" /></div>`
+        : `<div class="j-hd-store"><span>${escapeHtml(st.name)}</span></div>`
+    )
+    .join('');
+
+  return `
+    <div class="block-section j-header">
+      <div class="j-hd-utility">Visas inte brevet korrekt? <a href="#">Öppna i webbläsaren</a></div>
+      <div class="j-hd-main">
+        <div class="j-hd-logo-wrap">${logo}</div>
+        <div class="j-hd-label">${escapeHtml(label)}</div>
+      </div>
+      ${stores.length > 0 ? `<div class="j-hd-stores">${storeEls}</div>` : ''}
+    </div>`;
 }
 
 function heroJabsHtml(content: HeroContent, t: JabsTheme): string {

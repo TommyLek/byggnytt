@@ -10,11 +10,19 @@ export interface Newsletter {
   updated_at: string;
 }
 
+export interface HeaderStore {
+  name: string;
+  logoUrl: string;
+}
+
 export interface NewsletterSettings {
   preheader: string;
   subject: string;
   sender_name: string;
   header_logo_url?: string;
+  // Header-chrome (proffskanalen): etikett + butikslogotyper
+  header_label?: string;
+  header_stores?: HeaderStore[];
   footer_text: string;
   color_primary: string;
   color_secondary: string;
