@@ -104,7 +104,10 @@ function JabsHeaderChrome({ settings }: { settings: NewsletterSettings }) {
         ) : (
           <span className="text-lg font-bold" style={{ color: t.ink }}>{settings.sender_name}</span>
         )}
-        <span className="text-[11px] font-bold tracking-[2px] uppercase" style={{ color: t.muted }}>
+        <span
+          className="font-bold tracking-[2px] uppercase"
+          style={{ color: t.muted, fontSize: settings.header_label_size ?? 11 }}
+        >
           {label}
         </span>
       </div>

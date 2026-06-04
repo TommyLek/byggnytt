@@ -12,6 +12,7 @@ export const CHANNEL_CONFIG = {
       // Header-chrome (jabs): huvudlogga (laddas upp), etikett + butikslogotyper
       header_logo_url: '',
       header_label: 'Nyhetsbrev',
+      header_label_size: 11,
       header_stores: [
         { name: 'Järn AB Södertorg', logoUrl: '' },
         { name: 'Snicken', logoUrl: '' },

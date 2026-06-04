@@ -9,3 +9,4 @@ packages/backend/data/*
 .vite/
 data/
 *.tsbuildinfo
+test-mail.html

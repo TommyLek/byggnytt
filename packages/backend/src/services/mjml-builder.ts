@@ -175,10 +175,12 @@ function headerJabsMjml(settings: NewsletterSettings, jt: JabsTheme): string {
   const label = (settings.header_label || 'Nyhetsbrev').toUpperCase();
 
   const stores = settings.header_stores ?? [];
+  // Begränsa logotyperna med höjd (50px) så att bandet blir lika litet som i webbvyn,
+  // oavsett logotypens proportioner. Råbild i mj-text ger exakt height:50px;width:auto.
   const storeCols = stores
     .map((st) =>
       st.logoUrl
-        ? `<mj-column vertical-align="middle"><mj-image src="${escapeHtml(st.logoUrl)}" alt="${escapeHtml(st.name)}" width="150px" padding="10px 10px 0 10px" /></mj-column>`
+        ? `<mj-column vertical-align="middle"><mj-text align="center" padding="10px 10px 0 10px"><img src="${escapeHtml(st.logoUrl)}" alt="${escapeHtml(st.name)}" height="50" style="height:50px;width:auto;max-width:100%;display:inline-block;border:0;" /></mj-text></mj-column>`
         : `<mj-column vertical-align="middle"><mj-text align="center" font-size="14px" font-weight="bold" color="${jt.ink}" padding="14px 10px 0 10px">${escapeHtml(st.name)}</mj-text></mj-column>`
     )
     .join('');
@@ -196,7 +198,7 @@ function headerJabsMjml(settings: NewsletterSettings, jt: JabsTheme): string {
         ${logo}
       </mj-column>
       <mj-column width="40%" vertical-align="middle">
-        <mj-text align="right" font-size="11px" font-weight="bold" letter-spacing="2px" color="${jt.muted}" padding="0">${escapeHtml(label)}</mj-text>
+        <mj-text align="right" font-size="${settings.header_label_size ?? 11}px" font-weight="bold" letter-spacing="2px" color="${jt.muted}" padding="0">${escapeHtml(label)}</mj-text>
       </mj-column>
     </mj-section>
     ${stores.length > 0 ? `
@@ -300,7 +302,7 @@ function campaignJabsMjml(content: CampaignContent, jt: JabsTheme): string {
   // Tvåkolumnskort (bild + text) när bild finns, annars centrerad mörk banner.
   if (content.backgroundImageUrl) {
     return `
-      <mj-section background-color="${jt.sectionBg}" padding="8px 24px 26px 24px">
+      <mj-section background-color="${jt.featuredBg}" padding="0">
         <mj-column background-color="${jt.featuredImageBg}" width="45%" vertical-align="middle" padding="0">
           <mj-image src="${escapeHtml(content.backgroundImageUrl)}" alt="${escapeHtml(content.heading)}" padding="0" />
         </mj-column>
@@ -375,7 +377,7 @@ function footerJabsMjml(content: FooterContent, jt: JabsTheme): string {
   return `
     <mj-section background-color="${jt.footerBg}" padding="30px 36px 28px 36px">
       <mj-column>
-        <mj-text align="center" font-size="15px" font-weight="bold" color="${jt.footerInk}" padding="0 0 8px 0">
+        <mj-text align="center" font-size="15px" font-weight="bold" color="${jt.footerMuted}" padding="0 0 8px 0">
           ${escapeHtml(content.companyName)}
         </mj-text>
         <mj-text align="center" font-size="12px" color="${jt.footerMuted}" padding="0 0 4px 0">
@@ -401,11 +403,11 @@ function productJabsMjml(content: ProductContent, jt: JabsTheme): string {
     : '';
 
   return `
-    <mj-section background-color="${jt.sectionBg}" padding="14px 24px">
-      <mj-column background-color="${jt.surface}" border="1px solid ${jt.cardBorder}" width="40%" vertical-align="middle" padding="14px">
+    <mj-section background-color="${jt.surface}" padding="24px 36px">
+      <mj-column width="40%" vertical-align="middle" padding="0">
         <mj-image src="${escapeHtml(content.imageUrl)}" alt="${escapeHtml(content.name)}" padding="0" />
       </mj-column>
-      <mj-column background-color="${jt.surface}" border="1px solid ${jt.cardBorder}" width="60%" vertical-align="top" padding="16px 18px">
+      <mj-column width="60%" vertical-align="top" padding="0 0 0 20px">
         ${badge}
         <mj-text font-size="16px" font-weight="bold" color="${jt.ink}" line-height="20px" padding="0 0 4px 0">
           ${escapeHtml(content.name)}
@@ -426,7 +428,7 @@ function productJabsMjml(content: ProductContent, jt: JabsTheme): string {
 
 function productGridJabsMjml(content: ProductGridContent, jt: JabsTheme): string {
   const heading = content.heading
-    ? `<mj-section background-color="${jt.sectionBg}" padding="26px 36px 8px 36px">
+    ? `<mj-section background-color="${jt.surface}" padding="26px 36px 8px 36px">
          <mj-column>
            <mj-text padding="0">
              <div style="border-left:5px solid ${jt.accent}; padding-left:12px; font-size:20px; font-weight:bold; color:${jt.ink};">
@@ -446,7 +448,7 @@ function productGridJabsMjml(content: ProductGridContent, jt: JabsTheme): string
         ? `<mj-text padding="0 0 6px 0"><span style="display:inline-block; background-color:${jt.accent}; color:${jt.accentInk}; font-size:10px; font-weight:bold; text-transform:uppercase; letter-spacing:0.5px; padding:3px 7px;">${escapeHtml(p.badge)}</span></mj-text>`
         : '';
       return `
-        <mj-column background-color="${jt.surface}" border="1px solid ${jt.cardBorder}" width="${colWidth}" padding="12px 14px" vertical-align="top">
+        <mj-column width="${colWidth}" padding="0 10px" vertical-align="top">
           <mj-image src="${escapeHtml(p.imageUrl)}" alt="${escapeHtml(p.name)}" width="150px" height="150px" padding="0 0 8px 0" />
           ${badge}
           <mj-text font-size="14px" font-weight="bold" color="${jt.ink}" line-height="19px" padding="0 0 4px 0">${escapeHtml(p.name)}</mj-text>
@@ -462,7 +464,7 @@ function productGridJabsMjml(content: ProductGridContent, jt: JabsTheme): string
 
   return `
     ${heading}
-    <mj-section background-color="${jt.sectionBg}" padding="14px 18px 22px 18px">
+    <mj-section background-color="${jt.surface}" padding="14px 26px 22px 26px">
       ${productColumns}
     </mj-section>
   `;

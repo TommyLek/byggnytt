@@ -397,8 +397,8 @@ function getJabsStyles(settings: NewsletterSettings, t: JabsTheme): string {
     .j-imgtext .j-body { font-size: 14px; line-height: 23px; color: ${t.body}; margin-bottom: 14px; }
     .j-link { color: ${t.link}; font-size: 14px; font-weight: 700; text-decoration: none; }
 
-    /* Campaign / featured (mörk) */
-    .j-featured { padding: 8px 24px 26px 24px; background-color: ${t.sectionBg}; }
+    /* Campaign / featured (mörk) – full bredd */
+    .j-featured { padding: 0; background-color: ${t.featuredBg}; }
     .j-featured-inner { display: flex; background-color: ${t.featuredBg}; }
     .j-featured-inner .j-col-img { flex: 0 0 45%; background-color: ${t.featuredImageBg}; display: flex; align-items: center; justify-content: center; }
     .j-featured-inner .j-col-img img { width: 100%; }
@@ -414,7 +414,7 @@ function getJabsStyles(settings: NewsletterSettings, t: JabsTheme): string {
 
     /* Footer */
     .j-footer { background-color: ${t.footerBg}; padding: 30px 36px 28px 36px; text-align: center; }
-    .j-footer .j-company { font-size: 15px; font-weight: 700; color: ${t.footerInk}; margin-bottom: 8px; }
+    .j-footer .j-company { font-size: 15px; font-weight: 700; color: ${t.footerMuted}; margin-bottom: 8px; }
     .j-footer .j-address { font-size: 12px; color: ${t.footerMuted}; margin-bottom: 4px; }
     .j-footer .j-contact { font-size: 12px; color: ${t.footerMuted}; margin-top: 4px; }
     .j-footer .j-contact a { color: ${t.footerMuted}; }
@@ -428,25 +428,25 @@ function getJabsStyles(settings: NewsletterSettings, t: JabsTheme): string {
     .j-badge.secondary { background-color: ${t.badgeSecondary}; text-transform: none; }
     .j-pricelabel { font-size: 11px; color: ${t.muted}; }
 
-    /* Product (enskild) */
-    .j-product { background-color: ${t.sectionBg}; padding: 14px 24px; }
-    .j-product-card { display: flex; gap: 0; background-color: ${t.surface}; border: 1px solid ${t.cardBorder}; }
-    .j-product-card .j-col-img { flex: 0 0 40%; display: flex; align-items: center; justify-content: center; padding: 14px; }
+    /* Product (enskild) – full bredd som hero */
+    .j-product { background-color: ${t.surface}; padding: 24px 36px; }
+    .j-product-card { display: flex; gap: 20px; align-items: center; }
+    .j-product-card .j-col-img { flex: 0 0 40%; display: flex; align-items: center; justify-content: center; }
     .j-product-card .j-col-img img { width: 100%; }
-    .j-product-card .j-col-info { flex: 1; padding: 16px 18px; }
+    .j-product-card .j-col-info { flex: 1; }
     .j-product-card h3 { font-size: 16px; font-weight: 700; color: ${t.ink}; line-height: 20px; margin: 8px 0 4px; }
     .j-product-card .j-desc { font-size: 12px; color: ${t.muted}; margin-bottom: 8px; }
     .j-product-card .j-sku { font-size: 11px; color: ${t.muted}; margin-bottom: 6px; }
     .j-product-card .j-price { font-size: 20px; font-weight: 700; color: ${t.accent}; margin: 0 0 12px; }
 
-    /* Product grid */
-    .j-gridhead { background-color: ${t.sectionBg}; padding: 26px 36px 8px 36px; }
+    /* Product grid – full bredd vit, som enskilt produktblock */
+    .j-gridhead { background-color: ${t.surface}; padding: 26px 36px 8px 36px; }
     .j-gridhead .j-heading { border-left: 5px solid ${t.accent}; padding-left: 12px; font-size: 20px; font-weight: 700; color: ${t.ink}; }
-    .j-grid-block { background-color: ${t.sectionBg}; padding: 14px 18px 22px; }
-    .j-grid { display: grid; gap: 12px; }
+    .j-grid-block { background-color: ${t.surface}; padding: 14px 36px 24px; }
+    .j-grid { display: grid; gap: 24px; }
     .j-grid.cols-2 { grid-template-columns: 1fr 1fr; }
     .j-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
-    .j-grid-card { display: flex; flex-direction: column; background-color: ${t.surface}; border: 1px solid ${t.cardBorder}; padding: 12px 14px; }
+    .j-grid-card { display: flex; flex-direction: column; }
     .j-grid-card img { width: 100%; height: 120px; object-fit: contain; margin-bottom: 8px; }
     .j-grid-card .j-name { font-size: 14px; font-weight: 700; color: ${t.ink}; line-height: 19px; margin-bottom: 4px; flex: 1; }
     .j-grid-card .j-price { font-size: 18px; font-weight: 700; color: ${t.accent}; margin-bottom: 8px; }
@@ -506,7 +506,7 @@ function headerJabsHtml(settings: NewsletterSettings, _t: JabsTheme): string {
       <div class="j-hd-utility">Visas inte brevet korrekt? <a href="#">Öppna i webbläsaren</a></div>
       <div class="j-hd-main">
         <div class="j-hd-logo-wrap">${logo}</div>
-        <div class="j-hd-label">${escapeHtml(label)}</div>
+        <div class="j-hd-label" style="font-size:${settings.header_label_size ?? 11}px">${escapeHtml(label)}</div>
       </div>
       ${stores.length > 0 ? `<div class="j-hd-stores">${storeEls}</div>` : ''}
     </div>`;

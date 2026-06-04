@@ -27,11 +27,11 @@ export function PropertyPanel() {
     return (
       <div>
         <h2 className="text-sm font-semibold text-gray-700 mb-3">Egenskaper</h2>
-        <p className="text-xs text-gray-400">Valj ett block for att redigera dess egenskaper</p>
+        <p className="text-xs text-gray-400">Välj ett block för att redigera dess egenskaper</p>
 
         {newsletter && (
           <div className="mt-6 border-t border-gray-200 pt-4">
-            <h3 className="text-sm font-semibold text-gray-700 mb-3">Nyhetsbrevsinstellningar</h3>
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">Nyhetsbrevsinställningar</h3>
             <SettingsForm />
           </div>
         )}
@@ -85,9 +85,9 @@ function SettingsForm() {
         <button
           onClick={applyChannelPreset}
           className="text-[11px] px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded transition-colors"
-          title="Aterstall farger och typografi till kanalens standardvarden"
+          title="Återställ färger och typografi till kanalens standardvärden"
         >
-          Aterstall kanalprofil
+          Återställ kanalprofil
         </button>
       </div>
 
@@ -99,7 +99,7 @@ function SettingsForm() {
           className="input-field"
         />
       </Field>
-      <Field label="Amnesrad">
+      <Field label="Ämnesrad">
         <input
           type="text"
           value={s.subject}
@@ -107,7 +107,7 @@ function SettingsForm() {
           className="input-field"
         />
       </Field>
-      <Field label="Forhandstext">
+      <Field label="Förhandstext">
         <input
           type="text"
           value={s.preheader}
@@ -116,7 +116,7 @@ function SettingsForm() {
           placeholder="Text som syns i mailklienten"
         />
       </Field>
-      <Field label="Avsandarnamn">
+      <Field label="Avsändarnamn">
         <input
           type="text"
           value={s.sender_name}
@@ -143,6 +143,19 @@ function SettingsForm() {
               onChange={(e) => updateSettings({ header_label: e.target.value })}
               className="input-field"
               placeholder="Nyhetsbrev"
+            />
+          </Field>
+          <Field label="Etikettstorlek (px)">
+            <input
+              type="number"
+              min={8}
+              max={32}
+              value={s.header_label_size ?? CHANNEL_CONFIG.proffs.defaultSettings.header_label_size ?? 11}
+              onChange={(e) => {
+                const n = parseInt(e.target.value, 10);
+                updateSettings({ header_label_size: Number.isNaN(n) ? undefined : n });
+              }}
+              className="input-field"
             />
           </Field>
           <div>
@@ -196,7 +209,7 @@ function SettingsForm() {
                     })
                   }
                   className="flex gap-0.5 p-1 rounded hover:bg-gray-100 transition-colors"
-                  title={`${config.label}-farger`}
+                  title={`${config.label}-färger`}
                 >
                   <span
                     className="w-3 h-3 rounded-full"
@@ -213,7 +226,7 @@ function SettingsForm() {
         </div>
       </div>
 
-      <Field label="Primarfarg">
+      <Field label="Primärfärg">
         <div className="flex gap-2">
           <input
             type="color"
@@ -229,7 +242,7 @@ function SettingsForm() {
           />
         </div>
       </Field>
-      <Field label="Sekundarfarg">
+      <Field label="Sekundärfärg">
         <div className="flex gap-2">
           <input
             type="color"
@@ -245,7 +258,7 @@ function SettingsForm() {
           />
         </div>
       </Field>
-      <Field label="Bakgrundsfarg">
+      <Field label="Bakgrundsfärg">
         <div className="flex gap-2">
           <input
             type="color"
@@ -354,7 +367,7 @@ function HeroForm({
           className="input-field"
         />
       </Field>
-      <Field label="CTA-lank">
+      <Field label="CTA-länk">
         <input
           type="text"
           value={content.ctaUrl || ''}
@@ -362,7 +375,7 @@ function HeroForm({
           className="input-field"
         />
       </Field>
-      <Field label="CTA-farg">
+      <Field label="CTA-färg">
         <div className="flex gap-2">
           <input
             type="color"
@@ -475,7 +488,7 @@ function ImageTextForm({
           className="input-field"
         />
       </Field>
-      <Field label="CTA-lank">
+      <Field label="CTA-länk">
         <input
           type="text"
           value={content.ctaUrl || ''}
@@ -527,7 +540,7 @@ function CampaignForm({
           className="input-field"
         />
       </Field>
-      <Field label="CTA-lank">
+      <Field label="CTA-länk">
         <input
           type="text"
           value={content.ctaUrl}
@@ -535,16 +548,16 @@ function CampaignForm({
           className="input-field"
         />
       </Field>
-      <Field label="Bakgrundsfarg">
+      <Field label="Bakgrundsfärg">
         <ColorField
           value={content.backgroundColor}
           onChange={(v) => update({ backgroundColor: v })}
         />
       </Field>
-      <Field label="Textfarg">
+      <Field label="Textfärg">
         <ColorField value={content.textColor} onChange={(v) => update({ textColor: v })} />
       </Field>
-      <Field label="CTA-farg">
+      <Field label="CTA-färg">
         <ColorField value={content.ctaColor} onChange={(v) => update({ ctaColor: v })} />
       </Field>
     </div>
@@ -571,7 +584,7 @@ function DividerForm({
           <option value="dots">Punkter</option>
         </select>
       </Field>
-      <Field label="Hojd (px)">
+      <Field label="Höjd (px)">
         <input
           type="number"
           value={content.height}
@@ -582,7 +595,7 @@ function DividerForm({
         />
       </Field>
       {content.style !== 'space' && (
-        <Field label="Farg">
+        <Field label="Färg">
           <ColorField
             value={content.lineColor || '#DDDDDD'}
             onChange={(v) => update({ lineColor: v })}
@@ -602,7 +615,7 @@ function FooterForm({
 }) {
   return (
     <div className="space-y-3">
-      <Field label="Foretagsnamn">
+      <Field label="Företagsnamn">
         <input
           type="text"
           value={content.companyName}
@@ -650,7 +663,7 @@ function FooterForm({
           className="input-field"
         />
       </Field>
-      <Field label="Avregistreringslank">
+      <Field label="Avregistreringslänk">
         <input
           type="text"
           value={content.unsubscribeUrl}
@@ -671,7 +684,7 @@ function ProductForm({
 }) {
   return (
     <div className="space-y-3">
-      <Field label="Hamta fran webshop">
+      <Field label="Hämta från webshop">
         <ProductLookup
           currentSku={content.sku}
           onResult={(p) => update({ ...p })}
@@ -711,7 +724,7 @@ function ProductForm({
           placeholder="t.ex. 1 299 kr"
         />
       </Field>
-      <Field label="Produktlank">
+      <Field label="Produktlänk">
         <input
           type="text"
           value={content.productUrl}
@@ -799,11 +812,11 @@ function ProductGridForm({
             onClick={addProduct}
             className="text-xs text-blue-600 hover:text-blue-800 font-medium"
           >
-            + Lagg till tom
+            + Lägg till tom
           </button>
         </div>
         <div className="mb-3">
-          <Field label="Lagg till fran webshop">
+          <Field label="Lägg till från webshop">
             <ProductLookup onResult={addFromWebshop} />
           </Field>
         </div>
@@ -857,7 +870,7 @@ function ProductFieldset({
       </div>
       {open && (
         <div className="p-2 space-y-2">
-          <Field label="Hamta fran webshop">
+          <Field label="Hämta från webshop">
             <ProductLookup
               currentSku={product.sku}
               onResult={(p) => onChange(index, { ...p })}
@@ -887,7 +900,7 @@ function ProductFieldset({
               className="input-field"
             />
           </Field>
-          <Field label="Lank">
+          <Field label="Länk">
             <input
               type="text"
               value={product.productUrl}
@@ -926,7 +939,7 @@ function BlockStyleForm({ block }: { block: Block }) {
 
   return (
     <div className="space-y-3">
-      <Field label="Bakgrundsfarg">
+      <Field label="Bakgrundsfärg">
         <div className="flex gap-2">
           <input
             type="color"

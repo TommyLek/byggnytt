@@ -443,7 +443,7 @@ function FooterPreview({ block, content }: { block: Block; content: FooterConten
         field="companyName"
         as="p"
         className="text-sm font-bold"
-        placeholder="Foretagsnamn"
+        placeholder="Företagsnamn"
       />
       <p className="text-xs text-gray-400 mt-1">{content.address}</p>
       {content.phone && <p className="text-xs text-gray-400">{content.phone}</p>}
@@ -648,8 +648,7 @@ function ImageTextJabsPreview({ block, content, t }: { block: Block; content: Im
 function CampaignJabsPreview({ block, content, t }: { block: Block; content: CampaignContent; t: JabsTheme }) {
   const hasImage = !!content.backgroundImageUrl;
   return (
-    <div style={{ backgroundColor: t.sectionBg }} className="px-6 pt-2 pb-6">
-      <div className={`flex ${hasImage ? '' : 'justify-center'}`} style={{ backgroundColor: t.featuredBg }}>
+    <div className={`flex ${hasImage ? '' : 'justify-center'}`} style={{ backgroundColor: t.featuredBg }}>
         {hasImage && (
           <div className="w-[45%]">
             <CanvasImage
@@ -662,7 +661,10 @@ function CampaignJabsPreview({ block, content, t }: { block: Block; content: Cam
             />
           </div>
         )}
-        <div className={`${hasImage ? 'flex-1' : 'w-full text-center'} px-7 py-6`}>
+        <div
+          className={`${hasImage ? 'flex-1' : 'w-full text-center'} px-7 py-6`}
+          style={{ color: t.featuredInk }}
+        >
           <InlineText
             value={content.heading}
             blockId={block.id}
@@ -671,14 +673,16 @@ function CampaignJabsPreview({ block, content, t }: { block: Block; content: Cam
             className="text-lg font-bold mb-2"
             placeholder="Kampanjrubrik"
           />
-          <InlineText
-            value={content.body || ''}
-            blockId={block.id}
-            field="body"
-            as="p"
-            className="text-sm mb-3"
-            placeholder="Kampanjtext"
-          />
+          <div style={{ color: t.featuredBody }}>
+            <InlineText
+              value={content.body || ''}
+              blockId={block.id}
+              field="body"
+              as="p"
+              className="text-sm mb-3"
+              placeholder="Kampanjtext"
+            />
+          </div>
           <span
             className="inline-block px-5 py-2.5 text-xs font-bold"
             style={{ backgroundColor: content.ctaColor || t.accent, color: t.accentInk, borderRadius: 3 }}
@@ -687,20 +691,19 @@ function CampaignJabsPreview({ block, content, t }: { block: Block; content: Cam
           </span>
         </div>
       </div>
-    </div>
   );
 }
 
 function FooterJabsPreview({ block, content, t }: { block: Block; content: FooterContent; t: JabsTheme }) {
   return (
-    <div className="text-center p-7" style={{ backgroundColor: t.footerBg }}>
+    <div className="text-center p-7" style={{ backgroundColor: t.footerBg, color: t.footerMuted }}>
       <InlineText
         value={content.companyName}
         blockId={block.id}
         field="companyName"
         as="p"
         className="text-sm font-bold"
-        placeholder="Foretagsnamn"
+        placeholder="Företagsnamn"
       />
       <p className="text-xs mt-1" style={{ color: t.footerMuted }}>{content.address}</p>
       {content.phone && <p className="text-xs" style={{ color: t.footerMuted }}>{content.phone}</p>}
@@ -717,9 +720,9 @@ function FooterJabsPreview({ block, content, t }: { block: Block; content: Foote
 
 function ProductJabsPreview({ block, content, t }: { block: Block; content: ProductContent; t: JabsTheme }) {
   return (
-    <div className="px-6 py-3.5" style={{ backgroundColor: t.sectionBg }}>
-      <div className="flex" style={{ backgroundColor: t.surface, border: `1px solid ${t.cardBorder}` }}>
-        <div className="w-2/5 p-3.5 flex items-center">
+    <div className="px-7 py-5" style={{ backgroundColor: t.surface }}>
+      <div className="flex gap-4 items-center">
+        <div className="w-2/5 flex items-center">
           <CanvasImage
             url={content.imageUrl}
             alt={content.name}
@@ -729,7 +732,7 @@ function ProductJabsPreview({ block, content, t }: { block: Block; content: Prod
             placeholderText="Produkt"
           />
         </div>
-        <div className="flex-1 p-4 min-w-0">
+        <div className="flex-1 min-w-0">
           {content.badge && (
             <span
               className="inline-block px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide mb-2"
@@ -759,7 +762,7 @@ function ProductJabsPreview({ block, content, t }: { block: Block; content: Prod
 
 function ProductGridJabsPreview({ block, content, t }: { block: Block; content: ProductGridContent; t: JabsTheme }) {
   return (
-    <div style={{ backgroundColor: t.sectionBg }} className="px-5 pt-6 pb-5">
+    <div style={{ backgroundColor: t.surface }} className="px-7 pt-6 pb-5">
       {content.heading !== undefined && (
         <div style={{ borderLeft: `5px solid ${t.accent}`, paddingLeft: 12, marginBottom: 14 }}>
           <InlineText
@@ -772,9 +775,9 @@ function ProductGridJabsPreview({ block, content, t }: { block: Block; content: 
           />
         </div>
       )}
-      <div className={`grid gap-3 ${content.columns === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+      <div className={`grid gap-5 ${content.columns === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
         {content.products.map((product, i) => (
-          <div key={i} className="p-3" style={{ backgroundColor: t.surface, border: `1px solid ${t.cardBorder}` }}>
+          <div key={i}>
             {product.badge && (
               <span
                 className="inline-block px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide mb-1.5"

@@ -22,6 +22,7 @@ export interface NewsletterSettings {
   header_logo_url?: string;
   // Header-chrome (proffskanalen): etikett + butikslogotyper
   header_label?: string;
+  header_label_size?: number;
   header_stores?: HeaderStore[];
   footer_text: string;
   color_primary: string;
