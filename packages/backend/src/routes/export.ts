@@ -32,10 +32,17 @@ router.post('/pdf/:id', validateUuidParam(), async (req, res, next) => {
 
     const pdfBuffer = await generatePdf(html);
 
-    const safeTitle = row.title.replace(/[^a-zA-Z0-9åäöÅÄÖ\s-]/g, '').replace(/\s+/g, '_');
+    const safeTitle =
+      row.title.replace(/[^a-zA-Z0-9åäöÅÄÖ\s-]/g, '').replace(/\s+/g, '_') || 'nyhetsbrev';
+    // ASCII-fallback för äldre klienter + UTF-8-filnamn enligt RFC 5987
+    const asciiTitle = safeTitle.replace(/[^\x20-\x7E]/g, '_');
+    const utf8Title = encodeURIComponent(safeTitle);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.pdf"`);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${asciiTitle}.pdf"; filename*=UTF-8''${utf8Title}.pdf`
+    );
     res.setHeader('Content-Length', pdfBuffer.length);
     res.send(pdfBuffer);
   } catch (err) {

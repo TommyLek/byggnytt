@@ -4,11 +4,11 @@ import { useEditorStore } from '../../stores/editorStore';
 
 const PALETTE_BLOCKS: { type: BlockType; icon: string; description: string }[] = [
   { type: 'hero', icon: '🖼', description: 'Stor bild med rubrik och CTA' },
-  { type: 'text', icon: '📝', description: 'Rubrik och brodtext' },
+  { type: 'text', icon: '📝', description: 'Rubrik och brödtext' },
   { type: 'image-text', icon: '🖼📝', description: 'Bild och text sida vid sida' },
   { type: 'campaign', icon: '🎯', description: 'Kampanjbanner' },
   { type: 'product', icon: '📦', description: 'Enskild produkt med bild och pris' },
-  { type: 'product-grid', icon: '📦📦', description: 'Produktrutnat (2-3 kolumner)' },
+  { type: 'product-grid', icon: '📦📦', description: 'Produktrutnät (2–3 kolumner)' },
   { type: 'divider', icon: '➖', description: 'Avdelare eller mellanrum' },
   { type: 'footer', icon: '📋', description: 'Kontakt och avregistrering' },
 ];

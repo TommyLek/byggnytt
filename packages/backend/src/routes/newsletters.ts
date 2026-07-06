@@ -159,13 +159,14 @@ router.put('/:id', validateUuidParam(), (req, res) => {
   }
 
   updates.push("updated_at = datetime('now')");
-  params.push(req.params.id);
+  params.push(req.params.id as string);
 
   db.prepare(`UPDATE newsletters SET ${updates.join(', ')} WHERE id = ?`).run(...params);
 
-  const updated = db.prepare('SELECT * FROM newsletters WHERE id = ?').get(
-    req.params.id
-  ) as Record<string, unknown>;
+  const updated = db.prepare('SELECT * FROM newsletters WHERE id = ?').get(req.params.id) as Record<
+    string,
+    unknown
+  >;
   res.json(parseNewsletterRow(updated));
 });
 
@@ -211,8 +212,7 @@ function parseNewsletterRow(row: Record<string, unknown>): Newsletter {
   return {
     ...row,
     blocks: typeof row.blocks === 'string' ? JSON.parse(row.blocks as string) : row.blocks,
-    settings:
-      typeof row.settings === 'string' ? JSON.parse(row.settings as string) : row.settings,
+    settings: typeof row.settings === 'string' ? JSON.parse(row.settings as string) : row.settings,
   } as Newsletter;
 }
 

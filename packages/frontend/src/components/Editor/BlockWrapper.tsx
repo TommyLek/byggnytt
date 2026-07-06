@@ -11,17 +11,18 @@ interface BlockWrapperProps {
 }
 
 export function BlockWrapper({ block, children }: BlockWrapperProps) {
-  const { selectBlock, removeBlock, duplicateBlock, selectedBlockId } = useEditorStore();
+  const { selectBlock, removeBlock, duplicateBlock, moveBlock, selectedBlockId, newsletter } =
+    useEditorStore();
   const isSelected = selectedBlockId === block.id;
 
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: block.id });
+  const blockIndex = newsletter?.blocks.findIndex((b) => b.id === block.id) ?? -1;
+  const blockCount = newsletter?.blocks.length ?? 0;
+  const canMoveUp = blockIndex > 0;
+  const canMoveDown = blockIndex >= 0 && blockIndex < blockCount - 1;
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: block.id,
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -34,9 +35,7 @@ export function BlockWrapper({ block, children }: BlockWrapperProps) {
       ref={setNodeRef}
       style={style}
       className={`relative group rounded-lg border-2 transition-colors ${
-        isSelected
-          ? 'border-blue-400 shadow-sm'
-          : 'border-transparent hover:border-gray-200'
+        isSelected ? 'border-blue-400 shadow-sm' : 'border-transparent hover:border-gray-200'
       }`}
       onClick={(e) => {
         e.stopPropagation();
@@ -64,6 +63,28 @@ export function BlockWrapper({ block, children }: BlockWrapperProps) {
           </span>
         </div>
         <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (canMoveUp) moveBlock(blockIndex, blockIndex - 1);
+            }}
+            disabled={!canMoveUp}
+            className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100"
+            title="Flytta upp"
+          >
+            ↑
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (canMoveDown) moveBlock(blockIndex, blockIndex + 1);
+            }}
+            disabled={!canMoveDown}
+            className="px-1.5 py-0.5 bg-gray-100 rounded text-gray-500 hover:text-gray-700 hover:bg-gray-200 disabled:opacity-30 disabled:hover:bg-gray-100"
+            title="Flytta ned"
+          >
+            ↓
+          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();

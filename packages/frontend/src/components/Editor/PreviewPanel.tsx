@@ -63,7 +63,7 @@ export function PreviewPanel({ onClose }: PreviewPanelProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0">
-          <h2 className="text-sm font-semibold text-gray-800">Forhandsgranskning</h2>
+          <h2 className="text-sm font-semibold text-gray-800">Förhandsgranskning</h2>
           <div className="flex items-center gap-2">
             {/* Render mode toggle */}
             <ToggleGroup
@@ -88,7 +88,7 @@ export function PreviewPanel({ onClose }: PreviewPanelProps) {
             <button
               onClick={fetchPreview}
               className="px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded-md border border-gray-200"
-              title="Uppdatera forhandsgranskning"
+              title="Uppdatera förhandsgranskning"
             >
               Uppdatera
             </button>
@@ -96,12 +96,12 @@ export function PreviewPanel({ onClose }: PreviewPanelProps) {
               onClick={openInNewWindow}
               className="px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-100 rounded-md border border-gray-200"
             >
-              Nytt fonster
+              Nytt fönster
             </button>
             <button
               onClick={onClose}
               className="px-2 py-1.5 text-xs text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
-              title="Stang"
+              title="Stäng"
             >
               &#10005;
             </button>
@@ -125,7 +125,7 @@ export function PreviewPanel({ onClose }: PreviewPanelProps) {
                   onClick={fetchPreview}
                   className="text-xs text-blue-600 hover:text-blue-800"
                 >
-                  Forsok igen
+                  Försök igen
                 </button>
               </div>
             </div>
@@ -139,7 +139,7 @@ export function PreviewPanel({ onClose }: PreviewPanelProps) {
                 srcDoc={html}
                 style={{ width: `${iframeWidth}px`, minHeight: '500px' }}
                 className="bg-white shadow-lg border-0 flex-1 rounded"
-                title="Forhandsgranskning"
+                title="Förhandsgranskning"
               />
             </div>
           )}

@@ -54,7 +54,9 @@ export function ExportDropdown({ onClose }: ExportDropdownProps) {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${newsletter.title}.pdf`;
+      // Ta bort tecken som inte är giltiga i filnamn
+      const safeTitle = newsletter.title.replace(/[\\/:*?"<>|]/g, '').trim() || 'nyhetsbrev';
+      a.download = `${safeTitle}.pdf`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -86,15 +88,15 @@ export function ExportDropdown({ onClose }: ExportDropdownProps) {
     if (!newsletter) return;
     try {
       if (isDirty) {
-        setStatus({ type: 'info', message: 'Sparar forst...' });
+        setStatus({ type: 'info', message: 'Sparar först...' });
         await saveIfNeeded();
       }
       const url = `${window.location.origin}${api.export.publicUrl(newsletter.id)}`;
       await navigator.clipboard.writeText(url);
-      setStatus({ type: 'success', message: 'Publik lank kopierad!' });
+      setStatus({ type: 'success', message: 'Publik länk kopierad!' });
       setTimeout(onClose, 1500);
     } catch {
-      setStatus({ type: 'error', message: 'Kunde inte kopiera lank' });
+      setStatus({ type: 'error', message: 'Kunde inte kopiera länk' });
     }
   };
 
@@ -103,18 +105,14 @@ export function ExportDropdown({ onClose }: ExportDropdownProps) {
       ref={ref}
       className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 w-60 z-50"
     >
-      <DropdownItem
-        label="Ladda ner PDF"
-        description="Genererar A4-dokument"
-        onClick={handlePdf}
-      />
+      <DropdownItem label="Ladda ner PDF" description="Genererar A4-dokument" onClick={handlePdf} />
       <DropdownItem
         label="Kopiera mail-HTML"
-        description="For inklistring i mailverktyg"
+        description="För inklistring i mailverktyg"
         onClick={handleCopyMjml}
       />
       <DropdownItem
-        label="Kopiera publik lank"
+        label="Kopiera publik länk"
         description="Webbversion av nyhetsbrevet"
         onClick={handleCopyPublicLink}
       />

@@ -4,7 +4,7 @@ import { api } from '../utils/api';
 import { AUTOSAVE_DEBOUNCE_MS } from '@byggnytt/shared';
 
 export function useAutosave() {
-  const { newsletter, isDirty, markClean } = useEditorStore();
+  const { newsletter, isDirty, markClean, setSaveState } = useEditorStore();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const savingRef = useRef(false);
 
@@ -15,6 +15,7 @@ export function useAutosave() {
 
     timerRef.current = setTimeout(async () => {
       savingRef.current = true;
+      setSaveState('saving');
       try {
         await api.newsletters.update(newsletter.id, {
           title: newsletter.title,
@@ -24,7 +25,8 @@ export function useAutosave() {
         });
         markClean();
       } catch (err) {
-        console.error('Autosave misslyckades:', err);
+        console.error('Autospar misslyckades:', err);
+        setSaveState('error');
       } finally {
         savingRef.current = false;
       }
@@ -33,5 +35,5 @@ export function useAutosave() {
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [isDirty, newsletter, markClean]);
+  }, [isDirty, newsletter, markClean, setSaveState]);
 }

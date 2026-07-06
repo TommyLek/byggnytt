@@ -16,7 +16,15 @@ interface EditorLayoutProps {
 }
 
 export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
-  const { setNewsletter, newsletter: current, isDirty, markClean } = useEditorStore();
+  const {
+    setNewsletter,
+    newsletter: current,
+    isDirty,
+    markClean,
+    saveState,
+    setSaveState,
+    updateStatus,
+  } = useEditorStore();
   const [showPreview, setShowPreview] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
@@ -27,20 +35,62 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
     setNewsletter(newsletter);
   }, [newsletter, setNewsletter]);
 
-  const handleSave = useCallback(async () => {
-    if (!current || !isDirty) return;
+  const handleSave = useCallback(async (): Promise<boolean> => {
+    const state = useEditorStore.getState();
+    if (!state.newsletter || !state.isDirty) return true;
+    setSaveState('saving');
     try {
-      await api.newsletters.update(current.id, {
-        title: current.title,
-        blocks: current.blocks,
-        settings: current.settings,
-        status: current.status,
+      await api.newsletters.update(state.newsletter.id, {
+        title: state.newsletter.title,
+        blocks: state.newsletter.blocks,
+        settings: state.newsletter.settings,
+        status: state.newsletter.status,
       });
       markClean();
+      return true;
     } catch (err) {
       console.error('Spara misslyckades:', err);
+      setSaveState('error');
+      return false;
     }
-  }, [current, isDirty, markClean]);
+  }, [markClean, setSaveState]);
+
+  // Ctrl+S / Cmd+S sparar manuellt
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [handleSave]);
+
+  // Varna innan fliken stängs med osparade ändringar
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (useEditorStore.getState().isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  // Spara innan vi lämnar editorn; fråga bara om sparningen misslyckas
+  const handleBack = async () => {
+    const saved = await handleSave();
+    if (
+      saved ||
+      window.confirm(
+        'Ändringarna kunde inte sparas. Vill du lämna ändå? Osparade ändringar går förlorade.'
+      )
+    ) {
+      onBack();
+    }
+  };
 
   if (!current) return null;
 
@@ -51,16 +101,13 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
       {/* Header */}
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-4">
-          <button
-            onClick={onBack}
-            className="text-gray-500 hover:text-gray-700 text-sm"
-          >
+          <button onClick={handleBack} className="text-gray-500 hover:text-gray-700 text-sm">
             &larr; Tillbaka
           </button>
           <div>
             <h1 className="text-lg font-semibold text-gray-900">
               {current.title}
-              {isDirty && <span className="text-xs text-amber-500 ml-2">(osparad)</span>}
+              <SaveIndicator isDirty={isDirty} saveState={saveState} />
             </h1>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <span
@@ -72,10 +119,8 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
               >
                 {channelLabel}
               </span>
-              <StatusBadge status={current.status} />
-              <span className="text-xs text-gray-400">
-                {current.blocks.length} block
-              </span>
+              <StatusSelect value={current.status} onChange={updateStatus} />
+              <span className="text-xs text-gray-400">{current.blocks.length} block</span>
             </div>
           </div>
         </div>
@@ -90,6 +135,7 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
           <button
             onClick={handleSave}
             disabled={!isDirty}
+            title="Spara (Ctrl+S)"
             className={`px-4 py-2 text-sm rounded-md border ${
               isDirty
                 ? 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
@@ -102,7 +148,7 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
             onClick={() => setShowPreview(true)}
             className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
           >
-            Forhandsgranska
+            Förhandsgranska
           </button>
           <div className="relative">
             <button
@@ -166,15 +212,13 @@ function SaveTemplateModal({
   const { newsletter, isDirty, markClean } = useEditorStore();
   const [name, setName] = useState(defaultName);
   const [saving, setSaving] = useState(false);
-  const [result, setResult] = useState<{ type: 'success' | 'error'; message: string } | null>(
-    null,
-  );
+  const [result, setResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   const handleSave = async () => {
     if (!name.trim()) return;
     setSaving(true);
     try {
-      // Spara nyhetsbrevet forst om det finns osparade andringar
+      // Spara nyhetsbrevet först om det finns osparade ändringar
       if (newsletter && isDirty) {
         await api.newsletters.update(newsletter.id, {
           title: newsletter.title,
@@ -217,7 +261,7 @@ function SaveTemplateModal({
       >
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Spara som mall</h2>
         <p className="text-xs text-gray-500 mb-4">
-          Sparar nuvarande block och installningar som en ateranvandbar mall for kanalen{' '}
+          Sparar nuvarande block och inställningar som en återanvändbar mall för kanalen{' '}
           <strong>{CHANNEL_CONFIG[channel].label}</strong>.
         </p>
 
@@ -265,20 +309,61 @@ function SaveTemplateModal({
   );
 }
 
-// === StatusBadge ===
+// === Sparindikator ===
 
-function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; className: string }> = {
-    draft: { label: 'Utkast', className: 'bg-gray-100 text-gray-600' },
-    ready: { label: 'Klar', className: 'bg-blue-100 text-blue-700' },
-    sent: { label: 'Skickad', className: 'bg-green-100 text-green-700' },
-  };
+function SaveIndicator({
+  isDirty,
+  saveState,
+}: {
+  isDirty: boolean;
+  saveState: 'idle' | 'saving' | 'saved' | 'error';
+}) {
+  if (saveState === 'saving') {
+    return <span className="text-xs text-gray-400 ml-2">Sparar…</span>;
+  }
+  if (saveState === 'error') {
+    return (
+      <span className="text-xs text-red-500 ml-2" title="Försök spara igen med Ctrl+S">
+        Kunde inte spara
+      </span>
+    );
+  }
+  if (isDirty) {
+    return <span className="text-xs text-amber-500 ml-2">(osparade ändringar)</span>;
+  }
+  if (saveState === 'saved') {
+    return <span className="text-xs text-green-600 ml-2">Sparad ✓</span>;
+  }
+  return null;
+}
 
-  const c = config[status] || { label: status, className: 'bg-gray-100 text-gray-600' };
+// === Statusväljare ===
 
+const STATUS_STYLE: Record<string, string> = {
+  draft: 'bg-gray-100 text-gray-600 border-gray-200',
+  ready: 'bg-blue-100 text-blue-700 border-blue-200',
+  sent: 'bg-green-100 text-green-700 border-green-200',
+};
+
+function StatusSelect({
+  value,
+  onChange,
+}: {
+  value: 'draft' | 'ready' | 'sent';
+  onChange: (status: 'draft' | 'ready' | 'sent') => void;
+}) {
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-medium ${c.className}`}>
-      {c.label}
-    </span>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as 'draft' | 'ready' | 'sent')}
+      title="Ändra status för nyhetsbrevet"
+      className={`px-2 py-0.5 rounded text-xs font-medium border cursor-pointer focus:outline-none ${
+        STATUS_STYLE[value] || STATUS_STYLE.draft
+      }`}
+    >
+      <option value="draft">Utkast</option>
+      <option value="ready">Klar</option>
+      <option value="sent">Skickad</option>
+    </select>
   );
 }

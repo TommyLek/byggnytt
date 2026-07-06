@@ -192,10 +192,10 @@ function SettingsForm() {
         </div>
       )}
 
-      {/* Fargschema */}
+      {/* Färgschema */}
       <div className="border-t border-gray-200 pt-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs font-medium text-gray-600">Fargschema</span>
+          <span className="text-xs font-medium text-gray-600">Färgschema</span>
           <div className="flex gap-1">
             {(Object.entries(CHANNEL_CONFIG) as [string, (typeof CHANNEL_CONFIG)['proffs']][]).map(
               ([key, config]) => (
@@ -313,11 +313,11 @@ function BlockContentForm({ block }: { block: Block }) {
     case 'product-grid':
       return <ProductGridForm content={block.content as ProductGridContent} update={update} />;
     default:
-      return <p className="text-xs text-gray-400">Inga egenskaper tillgangliga</p>;
+      return <p className="text-xs text-gray-400">Inga egenskaper tillgängliga</p>;
   }
 }
 
-// ── Block-specifika formular ───────────────────────────────────────────
+// ── Block-specifika formulär ───────────────────────────────────────────
 
 function HeroForm({
   content,
@@ -415,11 +415,11 @@ function TextForm({
           className="input-field"
         />
       </Field>
-      <Field label="Brodtext">
+      <Field label="Brödtext">
         <RichTextEditor
           value={content.body}
           onChange={(html) => update({ body: html })}
-          placeholder="Skriv din text har..."
+          placeholder="Skriv din text här..."
           minHeight="100px"
         />
       </Field>
@@ -460,8 +460,8 @@ function ImageTextForm({
           onChange={(e) => update({ imagePosition: e.target.value })}
           className="input-field"
         >
-          <option value="left">Vanster</option>
-          <option value="right">Hoger</option>
+          <option value="left">Vänster</option>
+          <option value="right">Höger</option>
         </select>
       </Field>
       <Field label="Rubrik">
@@ -472,11 +472,11 @@ function ImageTextForm({
           className="input-field"
         />
       </Field>
-      <Field label="Brodtext">
+      <Field label="Brödtext">
         <RichTextEditor
           value={content.body}
           onChange={(html) => update({ body: html })}
-          placeholder="Beskrivande text har..."
+          placeholder="Beskrivande text här..."
           minHeight="80px"
         />
       </Field>
@@ -517,7 +517,7 @@ function CampaignForm({
           className="input-field"
         />
       </Field>
-      <Field label="Brodtext">
+      <Field label="Brödtext">
         <input
           type="text"
           value={content.body || ''}
@@ -738,7 +738,7 @@ function ProductForm({
           value={content.badge || ''}
           onChange={(e) => update({ badge: e.target.value })}
           className="input-field"
-          placeholder="t.ex. Nyhet, Rea, Popular"
+          placeholder="t.ex. Nyhet, Rea, Populär"
         />
       </Field>
       <Field label="Beskrivning">
@@ -931,7 +931,7 @@ function ProductFieldset({
   );
 }
 
-// ── Gemensamma hjalpkomponenter ────────────────────────────────────────
+// ── Gemensamma hjälpkomponenter ────────────────────────────────────────
 
 function BlockStyleForm({ block }: { block: Block }) {
   const updateBlockStyle = useEditorStore((s) => s.updateBlockStyle);
@@ -1033,7 +1033,7 @@ function AlignSelect({
               : 'border-gray-200 text-gray-500 hover:bg-gray-50'
           }`}
         >
-          {align === 'left' ? 'Vanster' : align === 'center' ? 'Center' : 'Hoger'}
+          {align === 'left' ? 'Vänster' : align === 'center' ? 'Center' : 'Höger'}
         </button>
       ))}
     </div>

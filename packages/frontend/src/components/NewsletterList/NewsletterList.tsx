@@ -26,19 +26,20 @@ export function NewsletterList({ onEdit }: NewsletterListProps) {
   const [showCreate, setShowCreate] = useState(false);
   const [filterChannel, setFilterChannel] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
+  const [listError, setListError] = useState<string | null>(null);
 
   const fetchNewsletters = useCallback(async () => {
     try {
       setLoading(true);
+      setListError(null);
       const params: Record<string, string> = {};
       if (filterChannel !== 'all') params.channel = filterChannel;
       if (filterStatus !== 'all') params.status = filterStatus;
-      const data = await api.newsletters.list(
-        Object.keys(params).length > 0 ? params : undefined,
-      );
+      const data = await api.newsletters.list(Object.keys(params).length > 0 ? params : undefined);
       setNewsletters(data);
     } catch (err) {
-      console.error('Kunde inte hamta nyhetsbrev:', err);
+      console.error('Kunde inte hämta nyhetsbrev:', err);
+      setListError('Kunde inte hämta nyhetsbrev. Kontrollera att servern är igång.');
     } finally {
       setLoading(false);
     }
@@ -53,21 +54,29 @@ export function NewsletterList({ onEdit }: NewsletterListProps) {
     onEdit(newsletter);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (newsletter: Newsletter) => {
+    const confirmed = window.confirm(
+      `Vill du ta bort "${newsletter.title}"? Detta går inte att ångra.`
+    );
+    if (!confirmed) return;
     try {
-      await api.newsletters.delete(id);
-      setNewsletters((prev) => prev.filter((n) => n.id !== id));
+      setListError(null);
+      await api.newsletters.delete(newsletter.id);
+      setNewsletters((prev) => prev.filter((n) => n.id !== newsletter.id));
     } catch (err) {
       console.error('Kunde inte ta bort nyhetsbrev:', err);
+      setListError('Kunde inte ta bort nyhetsbrevet. Försök igen.');
     }
   };
 
   const handleDuplicate = async (id: string) => {
     try {
+      setListError(null);
       const duplicated = await api.newsletters.duplicate(id);
       setNewsletters((prev) => [duplicated, ...prev]);
     } catch (err) {
       console.error('Kunde inte duplicera nyhetsbrev:', err);
+      setListError('Kunde inte duplicera nyhetsbrevet. Försök igen.');
     }
   };
 
@@ -86,28 +95,30 @@ export function NewsletterList({ onEdit }: NewsletterListProps) {
         </button>
       </div>
 
-      {/* Skapa nytt - mallvaljare */}
+      {/* Skapa nytt - mallväljare */}
       {showCreate && (
-        <CreateFromTemplate
-          onCreated={handleCreated}
-          onCancel={() => setShowCreate(false)}
-        />
+        <CreateFromTemplate onCreated={handleCreated} onCancel={() => setShowCreate(false)} />
       )}
 
       {/* Filter */}
       <div className="flex items-center gap-4 mb-6">
-        <FilterGroup
-          options={CHANNEL_OPTIONS}
-          value={filterChannel}
-          onChange={setFilterChannel}
-        />
+        <FilterGroup options={CHANNEL_OPTIONS} value={filterChannel} onChange={setFilterChannel} />
         <div className="w-px h-6 bg-gray-200" />
-        <FilterGroup
-          options={STATUS_OPTIONS}
-          value={filterStatus}
-          onChange={setFilterStatus}
-        />
+        <FilterGroup options={STATUS_OPTIONS} value={filterStatus} onChange={setFilterStatus} />
       </div>
+
+      {/* Felmeddelande */}
+      {listError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md text-sm text-red-700 flex items-center justify-between">
+          <span>{listError}</span>
+          <button
+            onClick={fetchNewsletters}
+            className="text-xs text-red-700 underline hover:text-red-900 ml-4 shrink-0"
+          >
+            Försök igen
+          </button>
+        </div>
+      )}
 
       {/* Lista */}
       {loading ? (
@@ -119,14 +130,14 @@ export function NewsletterList({ onEdit }: NewsletterListProps) {
           <p className="text-gray-400 mb-4">
             {filterChannel !== 'all' || filterStatus !== 'all'
               ? 'Inga nyhetsbrev matchar filtret'
-              : 'Inga nyhetsbrev annu'}
+              : 'Inga nyhetsbrev ännu'}
           </p>
           {filterChannel === 'all' && filterStatus === 'all' && (
             <button
               onClick={() => setShowCreate(true)}
               className="text-blue-600 hover:text-blue-800 text-sm"
             >
-              Skapa ditt forsta nyhetsbrev
+              Skapa ditt första nyhetsbrev
             </button>
           )}
         </div>
@@ -138,7 +149,7 @@ export function NewsletterList({ onEdit }: NewsletterListProps) {
               newsletter={nl}
               onEdit={() => onEdit(nl)}
               onDuplicate={() => handleDuplicate(nl.id)}
-              onDelete={() => handleDelete(nl.id)}
+              onDelete={() => handleDelete(nl)}
             />
           ))}
         </div>
@@ -176,7 +187,7 @@ function CreateFromTemplate({
       setTemplates(data);
       setStep('template');
     } catch (err) {
-      console.error('Kunde inte hamta mallar:', err);
+      console.error('Kunde inte hämta mallar:', err);
       setError('Kunde inte hämta mallar. Kontrollera att servern är igång.');
     } finally {
       setLoadingTemplates(false);
@@ -217,20 +228,15 @@ function CreateFromTemplate({
       <div className="flex items-center gap-2 mb-5">
         <StepIndicator num={1} label="Kanal" active={step === 'channel'} done={!!channel} />
         <div className="w-6 h-px bg-gray-300" />
-        <StepIndicator
-          num={2}
-          label="Mall"
-          active={step === 'template'}
-          done={step === 'title'}
-        />
+        <StepIndicator num={2} label="Mall" active={step === 'template'} done={step === 'title'} />
         <div className="w-6 h-px bg-gray-300" />
         <StepIndicator num={3} label="Titel" active={step === 'title'} done={false} />
       </div>
 
-      {/* Steg 1: Valj kanal */}
+      {/* Steg 1: Välj kanal */}
       {step === 'channel' && (
         <div>
-          <h2 className="text-sm font-semibold text-gray-700 mb-3">Valj kanal</h2>
+          <h2 className="text-sm font-semibold text-gray-700 mb-3">Välj kanal</h2>
           <div className="grid grid-cols-2 gap-3">
             {(Object.entries(CHANNEL_CONFIG) as [string, (typeof CHANNEL_CONFIG)['proffs']][]).map(
               ([key, config]) => (
@@ -260,17 +266,17 @@ function CreateFromTemplate({
                     />
                   </div>
                 </button>
-              ),
+              )
             )}
           </div>
         </div>
       )}
 
-      {/* Steg 2: Valj mall */}
+      {/* Steg 2: Välj mall */}
       {step === 'template' && (
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-gray-700">Valj mall</h2>
+            <h2 className="text-sm font-semibold text-gray-700">Välj mall</h2>
             <button
               onClick={() => {
                 setStep('channel');
@@ -293,7 +299,7 @@ function CreateFromTemplate({
                 className="p-4 rounded-lg border-2 border-dashed border-gray-300 text-left hover:border-blue-400 hover:bg-blue-50 transition-colors"
               >
                 <div className="text-sm font-medium text-gray-700">Tom</div>
-                <div className="text-xs text-gray-400 mt-1">Borja fran noll</div>
+                <div className="text-xs text-gray-400 mt-1">Börja från noll</div>
               </button>
               {templates.map((tmpl) => (
                 <button
@@ -309,9 +315,7 @@ function CreateFromTemplate({
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-gray-400 mt-1">
-                    {tmpl.blocks.length} block
-                  </div>
+                  <div className="text-xs text-gray-400 mt-1">{tmpl.blocks.length} block</div>
                   <div className="flex gap-1 mt-2">
                     <span
                       className="w-3 h-3 rounded-full"
@@ -386,10 +390,7 @@ function CreateFromTemplate({
 
       {/* Avbryt */}
       <div className="mt-4 pt-3 border-t border-gray-100">
-        <button
-          onClick={onCancel}
-          className="text-xs text-gray-500 hover:text-gray-700"
-        >
+        <button onClick={onCancel} className="text-xs text-gray-500 hover:text-gray-700">
           Avbryt
         </button>
       </div>
@@ -470,9 +471,7 @@ function NewsletterCard({
             <span className={`px-2 py-0.5 rounded text-xs font-medium ${sc.className}`}>
               {sc.label}
             </span>
-            <span className="text-xs text-gray-400">
-              {newsletter.blocks.length} block
-            </span>
+            <span className="text-xs text-gray-400">{newsletter.blocks.length} block</span>
             <span className="text-xs text-gray-400">
               Uppdaterad: {new Date(newsletter.updated_at).toLocaleDateString('sv-SE')}
             </span>

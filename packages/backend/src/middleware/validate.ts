@@ -66,7 +66,7 @@ export function validateUuidParam(paramName = 'id') {
 
   return (req: Request, res: Response, next: NextFunction): void => {
     const value = req.params[paramName];
-    if (!value || !uuidRegex.test(value)) {
+    if (typeof value !== 'string' || !uuidRegex.test(value)) {
       res.status(400).json({ error: `Ogiltigt ID-format för '${paramName}'` });
       return;
     }

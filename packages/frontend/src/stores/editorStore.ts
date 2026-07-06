@@ -3,10 +3,13 @@ import { v4 as uuidv4 } from 'uuid';
 import type { Newsletter, Block, BlockType, NewsletterSettings } from '@byggnytt/shared';
 import { getBlockDefaults } from '@byggnytt/shared';
 
+export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
+
 interface EditorState {
   newsletter: Newsletter | null;
   selectedBlockId: string | null;
   isDirty: boolean;
+  saveState: SaveState;
 
   // Actions
   setNewsletter: (newsletter: Newsletter) => void;
@@ -19,6 +22,8 @@ interface EditorState {
   updateBlockStyle: (blockId: string, style: Partial<Block['style']>) => void;
   updateSettings: (settings: Partial<NewsletterSettings>) => void;
   updateTitle: (title: string) => void;
+  updateStatus: (status: Newsletter['status']) => void;
+  setSaveState: (saveState: SaveState) => void;
   markClean: () => void;
 }
 
@@ -26,8 +31,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   newsletter: null,
   selectedBlockId: null,
   isDirty: false,
+  saveState: 'idle',
 
-  setNewsletter: (newsletter) => set({ newsletter, isDirty: false, selectedBlockId: null }),
+  setNewsletter: (newsletter) =>
+    set({ newsletter, isDirty: false, selectedBlockId: null, saveState: 'idle' }),
 
   selectBlock: (blockId) => set({ selectedBlockId: blockId }),
 
@@ -162,5 +169,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     });
   },
 
-  markClean: () => set({ isDirty: false }),
+  updateStatus: (status) => {
+    const { newsletter } = get();
+    if (!newsletter) return;
+
+    set({
+      newsletter: { ...newsletter, status },
+      isDirty: true,
+    });
+  },
+
+  setSaveState: (saveState) => set({ saveState }),
+
+  markClean: () => set({ isDirty: false, saveState: 'saved' }),
 }));
