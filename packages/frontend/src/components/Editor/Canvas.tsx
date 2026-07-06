@@ -54,7 +54,8 @@ export function Canvas() {
         <div className="flex items-center justify-center h-64 text-gray-400 text-sm">
           <div className="text-center">
             <p className="mb-2">Inga block ännu</p>
-            <p className="text-xs">Klicka på ett block i paletten till vänster</p>
+            <p className="text-xs hidden lg:block">Klicka på ett block i paletten till vänster</p>
+            <p className="text-xs lg:hidden">Tryck på &rdquo;+ Block&rdquo; i menyn nedanför</p>
           </div>
         </div>
       ) : (

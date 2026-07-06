@@ -58,13 +58,13 @@ export function PreviewPanel({ onClose }: PreviewPanelProps) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-2xl w-[90vw] max-w-[900px] h-[85vh] flex flex-col"
+        className="bg-white rounded-lg shadow-2xl w-[95vw] sm:w-[90vw] max-w-[900px] h-[90dvh] sm:h-[85vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 shrink-0">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3 sm:px-4 py-2.5 sm:py-3 border-b border-gray-200 shrink-0">
           <h2 className="text-sm font-semibold text-gray-800">Förhandsgranskning</h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {/* Render mode toggle */}
             <ToggleGroup
               options={[
@@ -109,7 +109,7 @@ export function PreviewPanel({ onClose }: PreviewPanelProps) {
         </div>
 
         {/* Preview body */}
-        <div className="flex-1 overflow-auto bg-gray-100 flex justify-center p-6">
+        <div className="flex-1 overflow-auto bg-gray-100 flex justify-center p-3 sm:p-6">
           {loading ? (
             <div className="flex items-center justify-center h-full">
               <div className="flex flex-col items-center">
@@ -130,14 +130,14 @@ export function PreviewPanel({ onClose }: PreviewPanelProps) {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center">
+            <div className="flex flex-col items-center w-full sm:w-auto">
               <div className="text-xs text-gray-400 mb-2">
                 {iframeWidth}px
                 {renderMode === 'mail' && ' (mailkompatibel HTML)'}
               </div>
               <iframe
                 srcDoc={html}
-                style={{ width: `${iframeWidth}px`, minHeight: '500px' }}
+                style={{ width: `${iframeWidth}px`, maxWidth: '100%', minHeight: '500px' }}
                 className="bg-white shadow-lg border-0 flex-1 rounded"
                 title="Förhandsgranskning"
               />

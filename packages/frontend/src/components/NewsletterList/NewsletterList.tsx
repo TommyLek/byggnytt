@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from 'react';
 import type { Newsletter, Template } from '@byggnytt/shared';
 import { api } from '../../utils/api';
 import { CHANNEL_CONFIG } from '@byggnytt/shared';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { useUiStore } from '../../stores/uiStore';
 
 interface NewsletterListProps {
   onEdit: (newsletter: Newsletter) => void;
@@ -27,6 +29,8 @@ export function NewsletterList({ onEdit }: NewsletterListProps) {
   const [filterChannel, setFilterChannel] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [listError, setListError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Newsletter | null>(null);
+  const addToast = useUiStore((s) => s.addToast);
 
   const fetchNewsletters = useCallback(async () => {
     try {
@@ -55,34 +59,31 @@ export function NewsletterList({ onEdit }: NewsletterListProps) {
   };
 
   const handleDelete = async (newsletter: Newsletter) => {
-    const confirmed = window.confirm(
-      `Vill du ta bort "${newsletter.title}"? Detta går inte att ångra.`
-    );
-    if (!confirmed) return;
+    setDeleteTarget(null);
     try {
-      setListError(null);
       await api.newsletters.delete(newsletter.id);
       setNewsletters((prev) => prev.filter((n) => n.id !== newsletter.id));
+      addToast('success', `"${newsletter.title}" togs bort`);
     } catch (err) {
       console.error('Kunde inte ta bort nyhetsbrev:', err);
-      setListError('Kunde inte ta bort nyhetsbrevet. Försök igen.');
+      addToast('error', 'Kunde inte ta bort nyhetsbrevet. Försök igen.');
     }
   };
 
   const handleDuplicate = async (id: string) => {
     try {
-      setListError(null);
       const duplicated = await api.newsletters.duplicate(id);
       setNewsletters((prev) => [duplicated, ...prev]);
+      addToast('success', `Kopia skapad: "${duplicated.title}"`);
     } catch (err) {
       console.error('Kunde inte duplicera nyhetsbrev:', err);
-      setListError('Kunde inte duplicera nyhetsbrevet. Försök igen.');
+      addToast('error', 'Kunde inte duplicera nyhetsbrevet. Försök igen.');
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto p-8">
-      <div className="flex items-center justify-between mb-8">
+    <div className="max-w-5xl mx-auto p-4 sm:p-8">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6 sm:mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">ByggNytt</h1>
           <p className="text-gray-500 mt-1">Hantera dina nyhetsbrev</p>
@@ -101,9 +102,9 @@ export function NewsletterList({ onEdit }: NewsletterListProps) {
       )}
 
       {/* Filter */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-6">
         <FilterGroup options={CHANNEL_OPTIONS} value={filterChannel} onChange={setFilterChannel} />
-        <div className="w-px h-6 bg-gray-200" />
+        <div className="w-px h-6 bg-gray-200 hidden sm:block" />
         <FilterGroup options={STATUS_OPTIONS} value={filterStatus} onChange={setFilterStatus} />
       </div>
 
@@ -149,10 +150,22 @@ export function NewsletterList({ onEdit }: NewsletterListProps) {
               newsletter={nl}
               onEdit={() => onEdit(nl)}
               onDuplicate={() => handleDuplicate(nl.id)}
-              onDelete={() => handleDelete(nl)}
+              onDelete={() => setDeleteTarget(nl)}
             />
           ))}
         </div>
+      )}
+
+      {/* Bekräfta borttagning */}
+      {deleteTarget && (
+        <ConfirmDialog
+          title="Ta bort nyhetsbrev"
+          message={`Vill du ta bort "${deleteTarget.title}"? Detta går inte att ångra.`}
+          confirmLabel="Ta bort"
+          danger
+          onConfirm={() => handleDelete(deleteTarget)}
+          onCancel={() => setDeleteTarget(null)}
+        />
       )}
     </div>
   );
@@ -237,7 +250,7 @@ function CreateFromTemplate({
       {step === 'channel' && (
         <div>
           <h2 className="text-sm font-semibold text-gray-700 mb-3">Välj kanal</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {(Object.entries(CHANNEL_CONFIG) as [string, (typeof CHANNEL_CONFIG)['proffs']][]).map(
               ([key, config]) => (
                 <button
@@ -292,7 +305,7 @@ function CreateFromTemplate({
               <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Tom mall */}
               <button
                 onClick={() => handleTemplateSelect(null)}
@@ -356,7 +369,7 @@ function CreateFromTemplate({
               <> &middot; Ingen mall (tom)</>
             )}
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               value={title}
@@ -454,7 +467,7 @@ function NewsletterCard({
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between hover:shadow-sm transition-shadow">
+    <div className="bg-white rounded-lg border border-gray-200 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:shadow-sm transition-shadow">
       <div className="flex items-center gap-4 min-w-0">
         <div className="min-w-0">
           <h3 className="font-medium text-gray-900 truncate">{newsletter.title}</h3>
@@ -478,7 +491,7 @@ function NewsletterCard({
           </div>
         </div>
       </div>
-      <div className="flex items-center gap-2 shrink-0 ml-4">
+      <div className="flex items-center gap-2 shrink-0 sm:ml-4">
         <button
           onClick={onEdit}
           className="px-3 py-1.5 text-sm bg-blue-50 text-blue-700 rounded hover:bg-blue-100 font-medium"

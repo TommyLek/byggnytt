@@ -5,11 +5,20 @@ import { getBlockDefaults } from '@byggnytt/shared';
 
 export type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 
+const HISTORY_LIMIT = 50;
+// Snabba på varandra följande ändringar av samma fält (t.ex. tangenttryck)
+// slås ihop till ett enda ångra-steg
+const COALESCE_MS = 1000;
+
 interface EditorState {
   newsletter: Newsletter | null;
   selectedBlockId: string | null;
   isDirty: boolean;
   saveState: SaveState;
+  past: Newsletter[];
+  future: Newsletter[];
+  lastEditKey: string | null;
+  lastEditAt: number;
 
   // Actions
   setNewsletter: (newsletter: Newsletter) => void;
@@ -23,163 +32,243 @@ interface EditorState {
   updateSettings: (settings: Partial<NewsletterSettings>) => void;
   updateTitle: (title: string) => void;
   updateStatus: (status: Newsletter['status']) => void;
+  undo: () => void;
+  redo: () => void;
   setSaveState: (saveState: SaveState) => void;
   markClean: () => void;
 }
 
-export const useEditorStore = create<EditorState>((set, get) => ({
-  newsletter: null,
-  selectedBlockId: null,
-  isDirty: false,
-  saveState: 'idle',
-
-  setNewsletter: (newsletter) =>
-    set({ newsletter, isDirty: false, selectedBlockId: null, saveState: 'idle' }),
-
-  selectBlock: (blockId) => set({ selectedBlockId: blockId }),
-
-  addBlock: (type, index) => {
-    const { newsletter } = get();
-    if (!newsletter) return;
-
-    const defaults = getBlockDefaults(type);
-    const newBlock: Block = {
-      id: uuidv4(),
-      type,
-      order: 0,
-      content: defaults.content,
-      style: defaults.style,
+export const useEditorStore = create<EditorState>((set, get) => {
+  /**
+   * Bygger history-delen av en state-uppdatering. Anropas INNAN newsletter
+   * ändras så att nuvarande tillstånd hamnar i past. Ett editKey gör att
+   * upprepade ändringar av samma fält inom COALESCE_MS blir ett ångra-steg.
+   */
+  const historyPatch = (editKey?: string) => {
+    const s = get();
+    if (!s.newsletter) return {};
+    const now = Date.now();
+    const coalesce =
+      editKey !== undefined && s.lastEditKey === editKey && now - s.lastEditAt < COALESCE_MS;
+    return {
+      past: coalesce ? s.past : [...s.past.slice(-(HISTORY_LIMIT - 1)), s.newsletter],
+      future: [] as Newsletter[],
+      lastEditKey: editKey ?? null,
+      lastEditAt: now,
     };
+  };
 
-    const blocks = [...newsletter.blocks];
-    const insertAt = index !== undefined ? index : blocks.length;
-    blocks.splice(insertAt, 0, newBlock);
+  return {
+    newsletter: null,
+    selectedBlockId: null,
+    isDirty: false,
+    saveState: 'idle',
+    past: [],
+    future: [],
+    lastEditKey: null,
+    lastEditAt: 0,
 
-    // Uppdatera ordning
-    blocks.forEach((b, i) => (b.order = i));
+    setNewsletter: (newsletter) =>
+      set({
+        newsletter,
+        isDirty: false,
+        selectedBlockId: null,
+        saveState: 'idle',
+        past: [],
+        future: [],
+        lastEditKey: null,
+      }),
 
-    set({
-      newsletter: { ...newsletter, blocks },
-      selectedBlockId: newBlock.id,
-      isDirty: true,
-    });
-  },
+    selectBlock: (blockId) => set({ selectedBlockId: blockId }),
 
-  removeBlock: (blockId) => {
-    const { newsletter, selectedBlockId } = get();
-    if (!newsletter) return;
+    addBlock: (type, index) => {
+      const { newsletter } = get();
+      if (!newsletter) return;
 
-    const blocks = newsletter.blocks.filter((b) => b.id !== blockId);
-    blocks.forEach((b, i) => (b.order = i));
+      const defaults = getBlockDefaults(type);
+      const newBlock: Block = {
+        id: uuidv4(),
+        type,
+        order: 0,
+        content: defaults.content,
+        style: defaults.style,
+      };
 
-    set({
-      newsletter: { ...newsletter, blocks },
-      selectedBlockId: selectedBlockId === blockId ? null : selectedBlockId,
-      isDirty: true,
-    });
-  },
+      const blocks = [...newsletter.blocks];
+      const insertAt = index !== undefined ? index : blocks.length;
+      blocks.splice(insertAt, 0, newBlock);
 
-  duplicateBlock: (blockId) => {
-    const { newsletter } = get();
-    if (!newsletter) return;
+      // Uppdatera ordning
+      blocks.forEach((b, i) => (b.order = i));
 
-    const blockIndex = newsletter.blocks.findIndex((b) => b.id === blockId);
-    if (blockIndex === -1) return;
+      set({
+        ...historyPatch(),
+        newsletter: { ...newsletter, blocks },
+        selectedBlockId: newBlock.id,
+        isDirty: true,
+      });
+    },
 
-    const original = newsletter.blocks[blockIndex];
-    const duplicate: Block = {
-      ...structuredClone(original),
-      id: uuidv4(),
-    };
+    removeBlock: (blockId) => {
+      const { newsletter, selectedBlockId } = get();
+      if (!newsletter) return;
 
-    const blocks = [...newsletter.blocks];
-    blocks.splice(blockIndex + 1, 0, duplicate);
-    blocks.forEach((b, i) => (b.order = i));
+      const blocks = newsletter.blocks.filter((b) => b.id !== blockId);
+      blocks.forEach((b, i) => (b.order = i));
 
-    set({
-      newsletter: { ...newsletter, blocks },
-      selectedBlockId: duplicate.id,
-      isDirty: true,
-    });
-  },
+      set({
+        ...historyPatch(),
+        newsletter: { ...newsletter, blocks },
+        selectedBlockId: selectedBlockId === blockId ? null : selectedBlockId,
+        isDirty: true,
+      });
+    },
 
-  moveBlock: (fromIndex, toIndex) => {
-    const { newsletter } = get();
-    if (!newsletter) return;
+    duplicateBlock: (blockId) => {
+      const { newsletter } = get();
+      if (!newsletter) return;
 
-    const blocks = [...newsletter.blocks];
-    const [moved] = blocks.splice(fromIndex, 1);
-    blocks.splice(toIndex, 0, moved);
-    blocks.forEach((b, i) => (b.order = i));
+      const blockIndex = newsletter.blocks.findIndex((b) => b.id === blockId);
+      if (blockIndex === -1) return;
 
-    set({
-      newsletter: { ...newsletter, blocks },
-      isDirty: true,
-    });
-  },
+      const original = newsletter.blocks[blockIndex];
+      const duplicate: Block = {
+        ...structuredClone(original),
+        id: uuidv4(),
+      };
 
-  updateBlockContent: (blockId, content) => {
-    const { newsletter } = get();
-    if (!newsletter) return;
+      const blocks = [...newsletter.blocks];
+      blocks.splice(blockIndex + 1, 0, duplicate);
+      blocks.forEach((b, i) => (b.order = i));
 
-    const blocks = newsletter.blocks.map((b) =>
-      b.id === blockId ? { ...b, content: { ...b.content, ...content } } : b
-    );
+      set({
+        ...historyPatch(),
+        newsletter: { ...newsletter, blocks },
+        selectedBlockId: duplicate.id,
+        isDirty: true,
+      });
+    },
 
-    set({
-      newsletter: { ...newsletter, blocks },
-      isDirty: true,
-    });
-  },
+    moveBlock: (fromIndex, toIndex) => {
+      const { newsletter } = get();
+      if (!newsletter) return;
 
-  updateBlockStyle: (blockId, style) => {
-    const { newsletter } = get();
-    if (!newsletter) return;
+      const blocks = [...newsletter.blocks];
+      const [moved] = blocks.splice(fromIndex, 1);
+      blocks.splice(toIndex, 0, moved);
+      blocks.forEach((b, i) => (b.order = i));
 
-    const blocks = newsletter.blocks.map((b) =>
-      b.id === blockId ? { ...b, style: { ...b.style, ...style } } : b
-    );
+      set({
+        ...historyPatch(),
+        newsletter: { ...newsletter, blocks },
+        isDirty: true,
+      });
+    },
 
-    set({
-      newsletter: { ...newsletter, blocks },
-      isDirty: true,
-    });
-  },
+    updateBlockContent: (blockId, content) => {
+      const { newsletter } = get();
+      if (!newsletter) return;
 
-  updateSettings: (settings) => {
-    const { newsletter } = get();
-    if (!newsletter) return;
+      const blocks = newsletter.blocks.map((b) =>
+        b.id === blockId ? { ...b, content: { ...b.content, ...content } } : b
+      );
 
-    set({
-      newsletter: {
-        ...newsletter,
-        settings: { ...newsletter.settings, ...settings },
-      },
-      isDirty: true,
-    });
-  },
+      set({
+        ...historyPatch(`content:${blockId}`),
+        newsletter: { ...newsletter, blocks },
+        isDirty: true,
+      });
+    },
 
-  updateTitle: (title) => {
-    const { newsletter } = get();
-    if (!newsletter) return;
+    updateBlockStyle: (blockId, style) => {
+      const { newsletter } = get();
+      if (!newsletter) return;
 
-    set({
-      newsletter: { ...newsletter, title },
-      isDirty: true,
-    });
-  },
+      const blocks = newsletter.blocks.map((b) =>
+        b.id === blockId ? { ...b, style: { ...b.style, ...style } } : b
+      );
 
-  updateStatus: (status) => {
-    const { newsletter } = get();
-    if (!newsletter) return;
+      set({
+        ...historyPatch(`style:${blockId}`),
+        newsletter: { ...newsletter, blocks },
+        isDirty: true,
+      });
+    },
 
-    set({
-      newsletter: { ...newsletter, status },
-      isDirty: true,
-    });
-  },
+    updateSettings: (settings) => {
+      const { newsletter } = get();
+      if (!newsletter) return;
 
-  setSaveState: (saveState) => set({ saveState }),
+      set({
+        ...historyPatch('settings'),
+        newsletter: {
+          ...newsletter,
+          settings: { ...newsletter.settings, ...settings },
+        },
+        isDirty: true,
+      });
+    },
 
-  markClean: () => set({ isDirty: false, saveState: 'saved' }),
-}));
+    updateTitle: (title) => {
+      const { newsletter } = get();
+      if (!newsletter) return;
+
+      set({
+        ...historyPatch('title'),
+        newsletter: { ...newsletter, title },
+        isDirty: true,
+      });
+    },
+
+    updateStatus: (status) => {
+      const { newsletter } = get();
+      if (!newsletter) return;
+
+      set({
+        ...historyPatch(),
+        newsletter: { ...newsletter, status },
+        isDirty: true,
+      });
+    },
+
+    undo: () => {
+      const { newsletter, past, future, selectedBlockId } = get();
+      if (!newsletter || past.length === 0) return;
+
+      const previous = past[past.length - 1];
+      set({
+        newsletter: previous,
+        past: past.slice(0, -1),
+        future: [newsletter, ...future].slice(0, HISTORY_LIMIT),
+        selectedBlockId:
+          selectedBlockId && previous.blocks.some((b) => b.id === selectedBlockId)
+            ? selectedBlockId
+            : null,
+        isDirty: true,
+        lastEditKey: null,
+      });
+    },
+
+    redo: () => {
+      const { newsletter, past, future, selectedBlockId } = get();
+      if (!newsletter || future.length === 0) return;
+
+      const [next, ...rest] = future;
+      set({
+        newsletter: next,
+        past: [...past.slice(-(HISTORY_LIMIT - 1)), newsletter],
+        future: rest,
+        selectedBlockId:
+          selectedBlockId && next.blocks.some((b) => b.id === selectedBlockId)
+            ? selectedBlockId
+            : null,
+        isDirty: true,
+        lastEditKey: null,
+      });
+    },
+
+    setSaveState: (saveState) => set({ saveState }),
+
+    markClean: () => set({ isDirty: false, saveState: 'saved' }),
+  };
+});

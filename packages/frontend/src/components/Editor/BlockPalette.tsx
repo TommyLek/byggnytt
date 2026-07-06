@@ -13,7 +13,12 @@ const PALETTE_BLOCKS: { type: BlockType; icon: string; description: string }[] =
   { type: 'footer', icon: '📋', description: 'Kontakt och avregistrering' },
 ];
 
-export function BlockPalette() {
+interface BlockPaletteProps {
+  /** Anropas efter att ett block lagts till (stänger t.ex. mobilpanelen) */
+  onAdded?: () => void;
+}
+
+export function BlockPalette({ onAdded }: BlockPaletteProps) {
   const addBlock = useEditorStore((s) => s.addBlock);
 
   return (
@@ -23,7 +28,10 @@ export function BlockPalette() {
         {PALETTE_BLOCKS.map(({ type, icon, description }) => (
           <button
             key={type}
-            onClick={() => addBlock(type)}
+            onClick={() => {
+              addBlock(type);
+              onAdded?.();
+            }}
             className="w-full text-left p-2.5 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-colors group"
           >
             <div className="flex items-center gap-2">

@@ -9,10 +9,23 @@ import { Canvas } from './Canvas';
 import { PropertyPanel } from './PropertyPanel';
 import { PreviewPanel } from './PreviewPanel';
 import { ExportDropdown } from './ExportDropdown';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 interface EditorLayoutProps {
   newsletter: Newsletter;
   onBack: () => void;
+}
+
+/** True om tangenttrycket sker i ett fält med egen ångra-hantering */
+function isEditableTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  if (!el || !el.tagName) return false;
+  return (
+    el.tagName === 'INPUT' ||
+    el.tagName === 'TEXTAREA' ||
+    el.tagName === 'SELECT' ||
+    el.isContentEditable
+  );
 }
 
 export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
@@ -24,10 +37,18 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
     saveState,
     setSaveState,
     updateStatus,
+    undo,
+    redo,
+    selectedBlockId,
   } = useEditorStore();
+  const canUndo = useEditorStore((s) => s.past.length > 0);
+  const canRedo = useEditorStore((s) => s.future.length > 0);
   const [showPreview, setShowPreview] = useState(false);
   const [showExport, setShowExport] = useState(false);
   const [showSaveTemplate, setShowSaveTemplate] = useState(false);
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  // Mobil: vilken sidopanel som visas som bottenpanel
+  const [mobilePanel, setMobilePanel] = useState<'blocks' | 'props' | null>(null);
 
   useAutosave();
 
@@ -55,17 +76,29 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
     }
   }, [markClean, setSaveState]);
 
-  // Ctrl+S / Cmd+S sparar manuellt
+  // Kortkommandon: Ctrl+S sparar, Ctrl+Z ångrar, Ctrl+Y/Ctrl+Shift+Z gör om
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const key = e.key.toLowerCase();
+      if (key === 's') {
         e.preventDefault();
         handleSave();
+        return;
+      }
+      // Låt textfält behålla sin egen ångra-hantering
+      if (isEditableTarget(e.target)) return;
+      if (key === 'z' && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+        e.preventDefault();
+        redo();
       }
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [handleSave]);
+  }, [handleSave, undo, redo]);
 
   // Varna innan fliken stängs med osparade ändringar
   useEffect(() => {
@@ -82,13 +115,10 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
   // Spara innan vi lämnar editorn; fråga bara om sparningen misslyckas
   const handleBack = async () => {
     const saved = await handleSave();
-    if (
-      saved ||
-      window.confirm(
-        'Ändringarna kunde inte sparas. Vill du lämna ändå? Osparade ändringar går förlorade.'
-      )
-    ) {
+    if (saved) {
       onBack();
+    } else {
+      setShowLeaveConfirm(true);
     }
   };
 
@@ -97,16 +127,19 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
   const channelLabel = CHANNEL_CONFIG[current.channel].label;
 
   return (
-    <div className="h-screen flex flex-col">
+    <div className="h-dvh flex flex-col">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-4">
-          <button onClick={handleBack} className="text-gray-500 hover:text-gray-700 text-sm">
+      <header className="bg-white border-b border-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-2 shrink-0">
+        <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+          <button
+            onClick={handleBack}
+            className="text-gray-500 hover:text-gray-700 text-sm shrink-0"
+          >
             &larr; Tillbaka
           </button>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">
-              {current.title}
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center min-w-0">
+              <span className="truncate">{current.title}</span>
               <SaveIndicator isDirty={isDirty} saveState={saveState} />
             </h1>
             <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -120,23 +153,45 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
                 {channelLabel}
               </span>
               <StatusSelect value={current.status} onChange={updateStatus} />
-              <span className="text-xs text-gray-400">{current.blocks.length} block</span>
+              <span className="text-xs text-gray-400 hidden sm:inline">
+                {current.blocks.length} block
+              </span>
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          {/* Ångra / Gör om */}
+          <div className="flex items-center gap-0.5 mr-1">
+            <button
+              onClick={undo}
+              disabled={!canUndo}
+              title="Ångra (Ctrl+Z)"
+              className="px-2 py-1.5 text-sm rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent"
+            >
+              ↶
+            </button>
+            <button
+              onClick={redo}
+              disabled={!canRedo}
+              title="Gör om (Ctrl+Y)"
+              className="px-2 py-1.5 text-sm rounded-md text-gray-600 hover:bg-gray-100 disabled:opacity-30 disabled:hover:bg-transparent"
+            >
+              ↷
+            </button>
+          </div>
           <button
             onClick={() => setShowSaveTemplate(true)}
-            className="px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+            className="px-2.5 sm:px-3 py-2 text-xs sm:text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
             title="Spara som mall"
           >
-            Spara som mall
+            <span className="hidden sm:inline">Spara som mall</span>
+            <span className="sm:hidden">Mall</span>
           </button>
           <button
             onClick={handleSave}
             disabled={!isDirty}
             title="Spara (Ctrl+S)"
-            className={`px-4 py-2 text-sm rounded-md border ${
+            className={`px-2.5 sm:px-4 py-2 text-xs sm:text-sm rounded-md border ${
               isDirty
                 ? 'bg-white border-gray-300 hover:bg-gray-50 text-gray-700'
                 : 'bg-gray-50 border-gray-200 text-gray-400 cursor-not-allowed'
@@ -146,14 +201,15 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
           </button>
           <button
             onClick={() => setShowPreview(true)}
-            className="px-4 py-2 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
+            className="px-2.5 sm:px-4 py-2 text-xs sm:text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
           >
-            Förhandsgranska
+            <span className="hidden sm:inline">Förhandsgranska</span>
+            <span className="sm:hidden">Granska</span>
           </button>
           <div className="relative">
             <button
               onClick={() => setShowExport((prev) => !prev)}
-              className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="px-2.5 sm:px-4 py-2 text-xs sm:text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               Exportera &#9662;
             </button>
@@ -162,23 +218,75 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
         </div>
       </header>
 
-      {/* Tre-kolumns editor */}
+      {/* Tre kolumner på desktop; på mobil endast canvas + bottenverktygsrad */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Blockpalett */}
-        <aside className="w-56 bg-white border-r border-gray-200 p-4 overflow-y-auto shrink-0">
+        {/* Blockpalett (desktop) */}
+        <aside className="hidden lg:block w-56 bg-white border-r border-gray-200 p-4 overflow-y-auto shrink-0">
           <BlockPalette />
         </aside>
 
         {/* Canvas */}
-        <main className="flex-1 bg-gray-100 p-6 overflow-y-auto">
+        <main className="flex-1 bg-gray-100 p-3 sm:p-6 pb-20 lg:pb-6 overflow-y-auto">
           <Canvas />
         </main>
 
-        {/* Egenskapspanel */}
-        <aside className="w-72 bg-white border-l border-gray-200 p-4 overflow-y-auto shrink-0">
+        {/* Egenskapspanel (desktop) */}
+        <aside className="hidden lg:block w-72 bg-white border-l border-gray-200 p-4 overflow-y-auto shrink-0">
           <PropertyPanel />
         </aside>
       </div>
+
+      {/* Mobil verktygsrad */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex z-40 pb-[env(safe-area-inset-bottom)]">
+        <button
+          onClick={() => setMobilePanel('blocks')}
+          className="flex-1 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-1.5"
+        >
+          <span className="text-blue-600 text-base leading-none">+</span> Block
+        </button>
+        <div className="w-px bg-gray-200" />
+        <button
+          onClick={() => setMobilePanel('props')}
+          className={`flex-1 py-3 text-sm font-medium hover:bg-gray-50 flex items-center justify-center gap-1.5 ${
+            selectedBlockId ? 'text-blue-600' : 'text-gray-700'
+          }`}
+        >
+          Egenskaper
+          {selectedBlockId && <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
+        </button>
+      </nav>
+
+      {/* Mobil bottenpanel (blockpalett / egenskaper) */}
+      {mobilePanel && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/40 z-50 flex items-end"
+          onClick={() => setMobilePanel(null)}
+        >
+          <div
+            className="bg-white w-full max-h-[75dvh] rounded-t-xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 shrink-0">
+              <span className="text-sm font-semibold text-gray-700">
+                {mobilePanel === 'blocks' ? 'Lägg till block' : 'Egenskaper'}
+              </span>
+              <button
+                onClick={() => setMobilePanel(null)}
+                className="px-2 py-1 text-sm text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+              >
+                Stäng ✕
+              </button>
+            </div>
+            <div className="overflow-y-auto p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+              {mobilePanel === 'blocks' ? (
+                <BlockPalette onAdded={() => setMobilePanel(null)} />
+              ) : (
+                <PropertyPanel />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Preview modal */}
       {showPreview && <PreviewPanel onClose={() => setShowPreview(false)} />}
@@ -190,6 +298,19 @@ export function EditorLayout({ newsletter, onBack }: EditorLayoutProps) {
           channel={current.channel}
           defaultName={`Mall - ${current.title}`}
           onClose={() => setShowSaveTemplate(false)}
+        />
+      )}
+
+      {/* Lämna trots misslyckad sparning */}
+      {showLeaveConfirm && (
+        <ConfirmDialog
+          title="Kunde inte spara"
+          message="Ändringarna kunde inte sparas. Vill du lämna ändå? Osparade ändringar går förlorade."
+          confirmLabel="Lämna ändå"
+          cancelLabel="Stanna kvar"
+          danger
+          onConfirm={onBack}
+          onCancel={() => setShowLeaveConfirm(false)}
         />
       )}
     </div>
@@ -252,11 +373,11 @@ function SaveTemplateModal({
 
   return (
     <div
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center"
+      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-2xl w-[420px] p-6"
+        className="bg-white rounded-lg shadow-2xl w-full max-w-[420px] p-6"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold text-gray-900 mb-1">Spara som mall</h2>
